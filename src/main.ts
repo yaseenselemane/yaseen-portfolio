@@ -3,13 +3,15 @@ import 'lenis/dist/lenis.css';
 import Lenis from 'lenis';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { TextPlugin } from 'gsap/TextPlugin';
 import { decode, preloader, cursor, magnetic, numerals, tints, minimap } from './fx.ts';
+import { field } from './field.ts';
 
 declare global {
   interface Window { __route?: boolean }
 }
 window.__route = true;
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, TextPlugin);
 
 const SVG = 'http://www.w3.org/2000/svg';
 const root = document.documentElement;
@@ -219,6 +221,24 @@ if (!reduce) {
     onEnter: (els) => els.forEach((e, i) => setTimeout(() => e.classList.add('in'), i * 70)),
   });
 
+  let net: ReturnType<typeof field> | undefined;
+  safe('field', () => { net = field(lenis); });
+
+  // Destination: the nodes spell YASEEN, the summary types out with the real time, the contact links land last.
+  safe('destination', () => {
+    const [summary, reply, contact] = gsap.utils.toArray<HTMLElement>('[data-dest]');
+    gsap.set([reply, ...contact.children], { opacity: 0, y: 40 });
+    gsap.set(summary, { opacity: 0 });
+    addEventListener('trace-complete', ((e: CustomEvent<number>) => {
+      const text = `Trace complete. 8 hops, ${e.detail.toFixed(1)} s, 0% packet loss.`;
+      const tl = net?.finale() ?? gsap.timeline();
+      tl.set(summary, { opacity: 1, text: '' }, 1.2)
+        .to(summary, { text, duration: text.length * 0.035, ease: 'none' }, 1.2)
+        .to(reply, { opacity: 1, y: 0, duration: 1, ease: 'expo.out' }, '>-0.2')
+        .to(contact.children, { opacity: 1, y: 0, duration: 1.2, stagger: 0.15, ease: 'elastic.out(1, 0.6)' }, '>-0.4');
+    }) as EventListener, { once: true });
+  });
+
   safe('cursor', cursor);
   safe('magnetic', () => magnetic(document.querySelectorAll<HTMLElement>('.btn, .big')));
   safe('numerals', () => numerals(lenis));
@@ -230,6 +250,7 @@ if (!reduce) {
     const r = svg.getBoundingClientRect();
     return { x: r.left + Number(cue.getAttribute('cx')), y: r.top + y0 };
   }).catch(() => root.classList.remove('preload'));
+  pre.then(() => net?.show());
   document.fonts.ready.then(() => safe('decode', () => {
     decode($<HTMLElement>('h1'), (tl) => { pre.then(() => tl.play()); });
     document.querySelectorAll<HTMLElement>('h2[data-decode]').forEach((h2) =>

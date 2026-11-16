@@ -127,9 +127,9 @@ function labs() {
 function destination() {
   const d = c.destination;
   return hop(8, 'destination', d.host, '', d.label, `
-    <p class="summary" data-reveal>Trace complete. 8 hops,<span data-total hidden> <b></b> s,</span> 0% packet loss.</p>
-    <p class="reply" data-reveal>${esc(d.reply)}</p>
-    <p class="contact" data-reveal>${d.links.map((l) => ext(l, 'big', 'OPEN')).join('')}</p>`, 'side-r dest');
+    <p class="summary" data-dest>Trace complete. 8 hops,<span data-total hidden> <b></b> s,</span> 0% packet loss.</p>
+    <p class="reply" data-dest>${esc(d.reply)}</p>
+    <p class="contact" data-dest>${d.links.map((l) => ext(l, 'big', 'OPEN')).join('')}</p>`, 'side-r dest');
 }
 
 const HOPS = [

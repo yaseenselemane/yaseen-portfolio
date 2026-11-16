@@ -391,3 +391,7 @@ html:not(.motion) .route .lit-glow, html:not(.motion) .route .halo, html:not(.mo
   .hud .up { display: none; }
   .hud { gap: 4px 12px; }
 }
+
+/* network field */
+.field { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+.page { z-index: 1; }
