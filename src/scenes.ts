@@ -2,8 +2,10 @@
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { TextPlugin } from 'gsap/TextPlugin';
+import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
+import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
 
-gsap.registerPlugin(ScrollTrigger, TextPlugin);
+gsap.registerPlugin(ScrollTrigger, TextPlugin, DrawSVGPlugin, MotionPathPlugin);
 const root = document.documentElement;
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', html = '') =>
   Object.assign(document.createElement(tag), { className: cls, innerHTML: html });
@@ -177,4 +179,31 @@ export function checkpoint() {
       .to(half, { xPercent: 55, autoAlpha: 0, duration: 0.8, ease: 'power2.in' }, '<');
     return () => gsap.set([gate, half, ...both('.acl li, .permit, .stamp, .scan, .cert .name')], { clearProps: 'all' });
   });
+}
+
+/** Hop 2: the Devland network draws itself, then a staff packet is denied at R1 and a security packet reaches the NVR. */
+export function devland() {
+  const fig = document.querySelector<SVGSVGElement>('.devland svg')!;
+  const q = (s: string) => [...fig.querySelectorAll(s)];
+  const staff = fig.querySelector('.dv-pkt.staff')!, sec = fig.querySelector('.dv-pkt.sec')!;
+  gsap.set(q('.dv-grp rect, .dv-box rect, .dv-lines path'), { drawSVG: '0%' });
+  gsap.set(q('text'), { autoAlpha: 0 });
+  gsap.timeline({
+    defaults: { ease: 'none' },
+    scrollTrigger: { trigger: fig, start: 'top 80%', end: 'bottom 25%', scrub: 0.6 },
+  })
+    .to(q('.dv-grp rect'), { drawSVG: '100%', duration: 0.6, stagger: 0.1 })
+    .to(q('.dv-box rect'), { drawSVG: '100%', duration: 0.4, stagger: 0.05 }, '<0.2')
+    .to(q('.dv-box text, .dv-grp text'), { autoAlpha: 1, duration: 0.2, stagger: 0.03 }, '<0.2')
+    .to(q('.dv-lines path'), { drawSVG: '100%', duration: 0.5, stagger: 0.06 }, '<')
+    .set(staff, { autoAlpha: 1 })
+    .to(staff, { motionPath: { path: '#dv-staff', align: '#dv-staff', alignOrigin: [0.5, 0.5] }, duration: 1 })
+    .fromTo(fig.querySelector('.deny'), { autoAlpha: 0, scale: 2.4, transformOrigin: '0% 50%' }, { autoAlpha: 1, scale: 1, duration: 0.15, ease: 'expo.in' })
+    .to(staff, { fill: '#ff5c5c', scale: 2, autoAlpha: 0, duration: 0.3 })
+    .to(fig.querySelector('.r1 rect'), { stroke: '#ff5c5c', duration: 0.1 }, '<')
+    .set(sec, { autoAlpha: 1 })
+    .to(sec, { motionPath: { path: '#dv-sec', align: '#dv-sec', alignOrigin: [0.5, 0.5] }, duration: 1.6 })
+    .to(fig.querySelector('.r1 rect'), { stroke: '#8a93a6', duration: 0.1 }, '<0.3')
+    .fromTo(fig.querySelector('.allow'), { autoAlpha: 0, scale: 2.4, transformOrigin: '50% 50%' }, { autoAlpha: 1, scale: 1, duration: 0.15, ease: 'expo.in' })
+    .to(fig.querySelector('.nvr rect'), { stroke: '#3ddc97', fill: 'rgba(61,220,151,0.15)', duration: 0.2 }, '<');
 }

@@ -43,10 +43,39 @@ function origin() {
     <blockquote class="pull" data-reveal><p>“${esc(o.quote)}”</p></blockquote>`);
 }
 
+// Hop 2 diagram: the real design from cctv-network-lab (VLANs and roles only, no addresses).
+function devlandDiagram() {
+  const box = (x: number, y: number, w: number, label: string, cls = '') =>
+    `<g class="dv-box ${cls}"><rect x="${x}" y="${y}" width="${w}" height="26" rx="3"/><text x="${x + w / 2}" y="${y + 17}" text-anchor="middle">${label}</text></g>`;
+  const grp = (x: number, y: number, w: number, h: number, label: string, low = false) =>
+    `<g class="dv-grp"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6"/><text x="${x + 8}" y="${low ? y + h - 8 : y + 16}">${label}</text></g>`;
+  return `<figure class="devland">
+    <svg viewBox="0 0 340 384" role="img" aria-labelledby="dv-t">
+      <title id="dv-t">Network diagram: cameras and the NVR on VLAN 20, staff on VLAN 10, security on VLAN 30, all through switch SW1 to router R1, where ACLs block staff from the cameras and let security reach only the NVR.</title>
+      ${grp(6, 200, 166, 178, 'VLAN 20 · CCTV', true)}${grp(184, 200, 150, 82, 'VLAN 10 · STAFF')}${grp(184, 296, 150, 82, 'VLAN 30 · SECURITY')}
+      <g class="dv-lines">
+        <path d="M170,48 V120"/>
+        <path d="M140,154 L76,245"/><path d="M140,154 L76,295"/><path d="M140,154 L76,345"/><path d="M155,154 L136,282"/>
+        <path d="M190,154 L265,232"/><path d="M215,137 H326 V339 H310"/>
+      </g>
+      ${box(125, 22, 90, 'R1 · ACLs', 'r1')}${box(125, 120, 90, 'SW1')}
+      ${box(18, 232, 58, 'CAM1')}${box(18, 282, 58, 'CAM2')}${box(18, 332, 58, 'CAM3')}${box(106, 282, 58, 'NVR', 'nvr')}
+      ${box(220, 232, 90, 'Staff PC')}${box(220, 326, 90, 'Security PC')}
+      <text class="dv-tag deny" x="222" y="40">DENY</text>
+      <text class="dv-tag allow" x="135" y="327" text-anchor="middle">PERMIT</text>
+      <path class="dv-path" id="dv-staff" d="M265,232 L190,154 L170,137 L170,50"/>
+      <path class="dv-path" id="dv-sec" d="M310,339 H326 V137 H215 L170,137 L170,50 L170,137 L155,154 L136,282"/>
+      <circle class="dv-pkt staff" r="5"/><circle class="dv-pkt sec" r="5"/>
+    </svg>
+    <figcaption>Staff traffic to the cameras is denied at R1. The security PC reaches only the NVR.</figcaption>
+  </figure>`;
+}
+
 function field() {
   const f = c.field;
   return hop(2, 'field-work', f.host, '', f.label, `
     <p class="org" data-reveal><span class="role">${esc(f.role)}</span>${esc(f.org)}</p>
+    ${devlandDiagram()}
     <ul class="points">${f.points.map((p) => `<li data-reveal>${esc(p)}</li>`).join('')}</ul>
     <p class="more" data-reveal>${ext(f.link, 'link')}</p>`, 'side-r');
 }
