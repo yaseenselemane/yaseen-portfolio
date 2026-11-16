@@ -226,18 +226,26 @@ if (!reduce) {
   safe('field', () => { net = field(lenis); });
 
   // Destination: the nodes spell YASEEN, the summary types out with the real time, the contact links land last.
+  // Coming back to the destination replays the name; the copy dims during the hold so the letters read.
   safe('destination', () => {
     const [summary, reply, contact] = gsap.utils.toArray<HTMLElement>('[data-dest]');
     gsap.set([reply, ...contact.children], { opacity: 0, y: 40 });
     gsap.set(summary, { opacity: 0 });
+    let done = false;
     addEventListener('trace-complete', ((e: CustomEvent<number>) => {
       const text = `Trace complete. 8 hops, ${e.detail.toFixed(1)} s, 0% packet loss.`;
-      const tl = net?.finale() ?? gsap.timeline();
+      const tl = net?.finale() ?? gsap.timeline().addLabel('hold');
       tl.set(summary, { opacity: 1, text: '' }, 1.2)
         .to(summary, { text, duration: text.length * 0.035, ease: 'none' }, 1.2)
-        .to(reply, { opacity: 1, y: 0, duration: 1, ease: 'expo.out' }, '>-0.2')
-        .to(contact.children, { opacity: 1, y: 0, duration: 1.2, stagger: 0.15, ease: 'elastic.out(1, 0.6)' }, '>-0.4');
+        .to(reply, { opacity: 1, y: 0, duration: 1, ease: 'expo.out' }, 'hold+=2.4')
+        .to(contact.children, { opacity: 1, y: 0, duration: 1.2, stagger: 0.15, ease: 'elastic.out(1, 0.6)' }, '>-0.4')
+        .add(() => (done = true));
     }) as EventListener, { once: true });
+    ScrollTrigger.create({
+      trigger: '#destination', start: 'top 40%',
+      onEnter: () => { if (done && net) net.finale().to([summary, reply, contact], { opacity: 0.12, duration: 0.6 }, 0).to([summary, reply, contact], { opacity: 1, duration: 0.8 }, 'hold+=2.4'); },
+      onLeaveBack: () => net?.reset(),
+    });
   });
 
   safe('devland', devland);

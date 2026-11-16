@@ -24,7 +24,8 @@ export function field(lenis: Lenis) {
   let W = 0, H = 0, dpr = 1;
   let nodes: Node[] = [];
   let links: [number, number][] = [];
-  let letterLinks: [number, number][] = [];
+  let letterDots: { x: number; y: number }[] = [];
+  let dotR = 2;
   let packets: Packet[] = [];
   let targets: { x: number; y: number }[] = [];
   let count = 0;
@@ -63,7 +64,7 @@ export function field(lenis: Lenis) {
     const off = document.createElement('canvas');
     off.width = W; off.height = H;
     const o = off.getContext('2d')!;
-    const size = Math.min(W * 0.15, H * 0.22);
+    const size = Math.min(W * (W < 600 ? 0.19 : 0.15), H * 0.22);
     o.font = `900 ${size}px Archivo, Arial Black, sans-serif`;
     o.textAlign = 'center';
     o.textBaseline = 'middle';
@@ -84,12 +85,11 @@ export function field(lenis: Lenis) {
       n.tx = p.x;
       n.ty = p.y;
     });
-    // Neighbouring dots in a letter get wired together, so the name reads as a network.
-    letterLinks = [];
-    const lim = (step * 1.5) ** 2;
-    for (let i = 0; i < nodes.length && i < pts.length; i++)
-      for (let j = i + 1; j < nodes.length && j < pts.length; j++)
-        if ((nodes[i].tx - nodes[j].tx) ** 2 + (nodes[i].ty - nodes[j].ty) ** 2 <= lim) letterLinks.push([i, j]);
+    // A fine, even dot grid fills the letters once the nodes land, so the name reads at any width.
+    const fine = Math.max(3, size / 15);
+    dotR = Math.max(1.6, fine * 0.42);
+    letterDots = [];
+    for (let y = fine / 2; y < H; y += fine) for (let x = fine / 2; x < W; x += fine) if (ink(x, y)) letterDots.push({ x, y });
   }
 
   function resize() {
@@ -156,11 +156,9 @@ export function field(lenis: Lenis) {
       ctx.stroke();
     }
 
-    if (m > 0.05) {
-      ctx.strokeStyle = `rgba(${AMBER},${0.45 * m})`;
-      ctx.beginPath();
-      for (const [a, b] of letterLinks) { ctx.moveTo(nodes[a].sx, nodes[a].sy); ctx.lineTo(nodes[b].sx, nodes[b].sy); }
-      ctx.stroke();
+    if (m > 0.6) {
+      ctx.fillStyle = pick(AMBERS, ((m - 0.6) / 0.4) * 0.9);
+      for (const d of letterDots) ctx.fillRect(d.x - dotR / 2, d.y - dotR / 2, dotR, dotR);
     }
 
     // Pointer as a signal source: nearby nodes link to it.
@@ -227,11 +225,12 @@ export function field(lenis: Lenis) {
 
   return {
     show: () => gsap.to(state, { intro: 1, duration: 1.6, ease: 'power2.out' }),
-    /** Spell YASEEN, hold, then loosen back into a network. Returns the timeline. */
+    /** Spell YASEEN, hold it for 2.4 s, then loosen back into a network. Returns the timeline. */
     finale: () =>
       gsap.timeline()
-        .to(state, { morph: 1, duration: 1.6, ease: 'power3.inOut' })
-        .to(state, { morph: 0.14, duration: 2.2, ease: 'power2.inOut' }, '+=1.4'),
+        .to(state, { morph: 1, duration: 1.6, ease: 'power3.inOut', overwrite: true })
+        .addLabel('hold')
+        .to(state, { morph: 0, duration: 2, ease: 'power2.inOut' }, 'hold+=2.4'),
     reset: () => gsap.to(state, { morph: 0, duration: 1, overwrite: true }),
     targets: () => targets.length,
   };

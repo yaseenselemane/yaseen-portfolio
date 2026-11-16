@@ -144,6 +144,8 @@ export function checkpoint() {
   const sec = document.querySelector<HTMLElement>('#certifications')!;
   const gate = sec.querySelector<HTMLElement>('.wrap')!;
   const head = gate.querySelector<HTMLElement>('.acl-head')!;
+  // The gate's own timeline reveals its rows; the generic blur-reveal would fight it inside the pin.
+  gate.querySelectorAll('[data-reveal]').forEach((e) => { e.removeAttribute('data-reveal'); e.classList.add('in'); });
   // Screen readers keep the full rule text; the typed copy is decoration.
   gate.querySelectorAll<HTMLElement>('.cert .name').forEach((n) => {
     n.insertAdjacentHTML('afterend', `<span class="sr-only">${n.textContent}</span>`);
@@ -161,7 +163,6 @@ export function checkpoint() {
   half.inert = true;
   half.querySelector('h2')?.removeAttribute('data-decode');
   half.querySelector('h2')?.removeAttribute('id');
-  half.querySelectorAll('[data-reveal]').forEach((e) => e.removeAttribute('data-reveal'));
   sec.append(half);
   const both = (s: string) => [...gate.querySelectorAll(s), ...half.querySelectorAll(s)];
   const lis = [gate.querySelectorAll('.acl li'), half.querySelectorAll('.acl li')];
