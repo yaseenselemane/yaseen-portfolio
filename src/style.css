@@ -157,9 +157,8 @@ a:hover .arrow { color: var(--amber); transform: translate(2px, -2px); }
   display: none; justify-content: space-between; gap: 16px;
   padding: 10px var(--pad-r) calc(10px + env(safe-area-inset-bottom)) 16px;
   font-size: 12px; color: var(--muted);
-  background: rgba(11, 14, 20, 0.88);
+  background: rgba(11, 14, 20, 0.94);
   border-top: 1px solid var(--line);
-  backdrop-filter: blur(8px);
   font-variant-numeric: tabular-nums;
 }
 .motion .hud { display: flex; }
@@ -357,7 +356,7 @@ html:not(.motion) .route .lit-glow, html:not(.motion) .route .halo, html:not(.mo
 .motion .route .nodes circle.on { filter: drop-shadow(0 0 6px rgba(255, 178, 36, 0.7)); }
 
 /* giant outlined hop numerals */
-.hop { position: relative; }
+.hop { position: relative; overflow-x: clip; } /* split gate, numerals and the full-bleed stage stay inside */
 .numeral { display: none; }
 .motion .numeral {
   display: block; position: absolute; z-index: 0; top: 4vh; right: -2vw;
@@ -372,13 +371,13 @@ html:not(.motion) .route .lit-glow, html:not(.motion) .route .halo, html:not(.mo
 .motion body::before, .motion body::after { content: ''; position: fixed; pointer-events: none; z-index: 40; }
 .motion body::before { inset: 0; background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55) 100%); }
 .motion body::after {
-  inset: -50%; opacity: 0.07;
+  inset: -8%; opacity: 0.07; will-change: transform;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   animation: grain 0.8s steps(4) infinite;
 }
 @keyframes grain {
-  0% { transform: translate(0, 0); } 25% { transform: translate(-5%, 3%); }
-  50% { transform: translate(4%, -4%); } 75% { transform: translate(-3%, -2%); } 100% { transform: translate(2%, 5%); }
+  0% { transform: translate(0, 0); } 25% { transform: translate(-4%, 3%); }
+  50% { transform: translate(3%, -4%); } 75% { transform: translate(-3%, -2%); } 100% { transform: translate(2%, 4%); }
 }
 
 /* cursor */
@@ -439,14 +438,14 @@ html:not(.motion) .route .lit-glow, html:not(.motion) .route .halo, html:not(.mo
   text-shadow: 0 0 60px rgba(255, 178, 36, 0.45);
 }
 .wp-slam span { visibility: hidden; font: 14px var(--mono); color: var(--text); letter-spacing: 0.06em; }
-.wp-reel { perspective: 1300px; display: flex; align-items: center; pointer-events: none; visibility: hidden; }
-.wp-track { display: flex; align-items: center; gap: 7vw; padding-right: 10vw; transform-style: preserve-3d; will-change: transform; }
-.wp-track .panel { flex: none; width: 44vw; transform-style: preserve-3d; margin: 0; }
-.wp-track .panel img { width: 100%; border-radius: 8px; border: 1px solid var(--line); box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 178, 36, 0.12); }
+.wp-reel { display: flex; align-items: center; pointer-events: none; visibility: hidden; }
+.wp-track { display: flex; align-items: center; gap: 7vw; padding-right: 10vw; will-change: transform; }
+.wp-track .panel { flex: none; width: 44vw; margin: 0; }
+.wp-track .panel img { width: 100%; border-radius: 8px; border: 1px solid rgba(255, 178, 36, 0.25); }
 .wp-track .panel figcaption { margin-top: 14px; }
 .wp-track .device { width: auto; }
 .wp-track .device img, .motion .shots .phone img {
-  height: 66vh; width: auto; border: 10px solid #151a24; border-radius: 34px; box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6), inset 0 0 0 1px #2a3242;
+  height: 66vh; width: auto; border: 10px solid #151a24; border-radius: 34px; outline: 1px solid #2a3242;
 }
 .motion .shots .phone img { height: auto; width: min(100%, 240px); }
 @media (max-width: 899px) {
@@ -531,3 +530,4 @@ html:not(.motion) .route .lit-glow, html:not(.motion) .route .halo, html:not(.mo
   .hx-head { color: var(--amber); margin-bottom: 10px; white-space: normal; }
   .pcap tbody tr.sel { background: rgba(255, 178, 36, 0.12); }
 }
+@media (max-width: 600px) { .motion body { padding-bottom: 80px; } }

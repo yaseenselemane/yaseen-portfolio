@@ -9,6 +9,10 @@ type Packet = { a: number; b: number; t: number; v: number };
 
 const AMBER = '255,178,36';
 const MUTED = '138,147,166';
+// Colour strings cached per 5% alpha step, so drawing a node allocates nothing.
+const shade = (rgb: string) => Array.from({ length: 21 }, (_, i) => `rgba(${rgb},${i / 20})`);
+const AMBERS = shade(AMBER), GREYS = shade(MUTED);
+const pick = (set: string[], a: number) => set[Math.max(0, Math.min(20, Math.round(a * 20)))];
 
 export function field(lenis: Lenis) {
   const cv = document.createElement('canvas');
@@ -89,8 +93,9 @@ export function field(lenis: Lenis) {
   }
 
   function resize() {
-    dpr = Math.min(1.5, devicePixelRatio || 1);
     W = innerWidth; H = innerHeight;
+    dpr = Math.min(W * H > 1e6 ? 1.25 : 1.5, devicePixelRatio || 1); // big screens get fewer pixels per node
+
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     cv.style.width = `${W}px`; cv.style.height = `${H}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -102,7 +107,7 @@ export function field(lenis: Lenis) {
   function draw(now: number) {
     const dt = Math.min(64, now - last);
     last = now;
-    if (document.hidden) return;
+    if (document.hidden || document.documentElement.classList.contains('field-rest')) return;
 
     // Budget: if frames average over 24 ms, halve the node count (once warmed up).
     frames++; slowSum += dt;
@@ -170,15 +175,15 @@ export function field(lenis: Lenis) {
       const near = n.sz;
       const r = (0.6 + near * 2.2) * (1 - m) + m * 3.2;
       const a = n.on || m > 0.5 ? 0.95 : 0.25 + near * 0.6;
-      const col = n.on || m > 0.5 ? AMBER : MUTED;
+      const col = pick(n.on || m > 0.5 ? AMBERS : GREYS, a);
       if (streak > 1) {
         const ux = n.sx - cx, uy = n.sy - cy;
         const k = (streak * near * 0.02);
-        ctx.strokeStyle = `rgba(${col},${a})`;
+        ctx.strokeStyle = col;
         ctx.lineWidth = r;
         ctx.beginPath(); ctx.moveTo(n.sx, n.sy); ctx.lineTo(n.sx + ux * k, n.sy + uy * k); ctx.stroke();
       } else {
-        ctx.fillStyle = `rgba(${col},${a})`;
+        ctx.fillStyle = col;
         ctx.fillRect(n.sx - r / 2, n.sy - r / 2, r, r);
       }
     }

@@ -51,8 +51,9 @@ export function workproof() {
   const WORD = 'WORKPROOF';
   let W = 0, H = 0, size = 0, ox = 0, oy = 0;
   const layout = () => {
-    const dpr = Math.min(1.5, devicePixelRatio || 1);
+    const dpr = 0.75; // the demo video is 960 px wide; more canvas pixels would only cost frames
     W = innerWidth; H = innerHeight;
+    last = '';
     mask.width = Math.round(W * dpr); mask.height = Math.round(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.font = '900 100px Archivo, sans-serif';
@@ -62,9 +63,14 @@ export function workproof() {
     ox = W / 2 - ctx.measureText(WORD).width / 2 + ctx.measureText('WOR').width + ctx.measureText('K').width * 0.17;
     oy = H / 2;
   };
+  let last = '';
   const paint = () => {
-    if (!view.live) return;
+    if (!view.live || mask.style.visibility === 'hidden') return;
     const src: CanvasImageSource = video.readyState >= 2 ? video : poster;
+    // Repaint only when the frame, the zoom or the fade changed.
+    const key = `${video.currentTime.toFixed(2)}|${view.zoom.toFixed(3)}|${view.fade.toFixed(2)}|${src === video}`;
+    if (key === last) return;
+    last = key;
     const sw = (src as HTMLVideoElement).videoWidth || poster.naturalWidth || 16;
     const sh = (src as HTMLVideoElement).videoHeight || poster.naturalHeight || 9;
     const k = Math.max(W / sw, H / sh);
@@ -89,20 +95,25 @@ export function workproof() {
   document.fonts.ready.then(layout);
   addEventListener('resize', layout);
   gsap.ticker.add(paint);
-  ScrollTrigger.create({ trigger: stage, start: 'top bottom', end: 'bottom top', onToggle: (s) => (view.live = s.isActive) });
+  ScrollTrigger.create({ trigger: stage, start: 'top bottom', end: 'bottom top', onToggle: (s) => { view.live = s.isActive; last = ''; } });
 
   gsap.matchMedia().add({ wide: '(min-width: 900px)', narrow: '(max-width: 899px)' }, (ctx) => {
     const wide = ctx.conditions!.wide;
+    let onUp = () => {};
     const tl = gsap.timeline({
       defaults: { ease: 'none' },
       scrollTrigger: {
         trigger: stage, start: 'top top', end: wide ? '+=260%' : '+=150%',
-        pin: true, scrub: 0.6, onToggle: pinFade, invalidateOnRefresh: true,
+        pin: true, scrub: 0.6, invalidateOnRefresh: true,
+        // The stage covers the screen, so the network field behind it can rest.
+        onToggle: (self) => { pinFade(self); root.classList.toggle('field-rest', self.isActive); },
+        onUpdate: () => onUp(),
       },
     });
     tl.fromTo(view, { fade: 0.55 }, { fade: 1, duration: 0.12 })
       .fromTo(view, { zoom: 1 }, { zoom: wide ? 70 : 90, duration: 0.5, ease: 'power3.in' })
       .set(mask, { autoAlpha: 0 })
+      .set(view, { live: false })
       .fromTo(slam.children[0], { scale: 3.4, autoAlpha: 0 }, { scale: 1, autoAlpha: 1, duration: 0.12, ease: 'expo.in' })
       .to(dim, { opacity: 0.55, duration: 0.12 }, '<')
       .fromTo(stage, { x: -14 }, { x: 0, duration: 0.08, ease: 'elastic.out(1, 0.2)' })
@@ -110,11 +121,19 @@ export function workproof() {
       .to({}, { duration: 0.15 });
     if (wide) {
       const panels = track.children;
-      tl.to(slam, { yPercent: -60, autoAlpha: 0, duration: 0.2 })
+      tl.addLabel('reel')
+        .to(slam, { yPercent: -60, autoAlpha: 0, duration: 0.2 })
         .to(dim, { opacity: 0.8, duration: 0.2 }, '<')
         .set(reel, { autoAlpha: 1 }, '<0.05')
         .fromTo(track, { x: () => innerWidth }, { x: () => -(track.scrollWidth - innerWidth * 0.55), duration: 1 }, '<0.05')
-        .fromTo(panels, { rotateY: -38, z: -200 }, { rotateY: 24, z: 80, duration: 1, stagger: 0.04 }, '<');
+        .fromTo(panels, { rotateY: -38, z: -200, transformPerspective: 1300 }, { rotateY: 24, z: 80, duration: 1, stagger: 0.04 }, '<');
+      // Behind the reel the video sits under an 80% dim: hide and pause it there to save the frames.
+      onUp = () => {
+        const behind = tl.time() > tl.labels.reel + 0.2;
+        video.style.visibility = behind ? 'hidden' : '';
+        if (behind && !video.paused) video.pause();
+        else if (!behind && video.paused && view.live) video.play().catch(() => {});
+      };
     }
     return () => gsap.set([mask, slam, slam.children, dim, stage, track, reel], { clearProps: 'all' });
   });
