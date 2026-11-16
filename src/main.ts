@@ -4,9 +4,9 @@ import Lenis from 'lenis';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { TextPlugin } from 'gsap/TextPlugin';
-import { decode, preloader, cursor, magnetic, numerals, tints, minimap } from './fx.ts';
+import { decode, preloader, cursor, magnetic, numerals, tints, minimap, fine } from './fx.ts';
 import { field } from './field.ts';
-import { workproof, checkpoint, devland, patchCable } from './scenes.ts';
+import { workproof, checkpoint, devland, patchCable, buildRows, labsCapture } from './scenes.ts';
 
 declare global {
   interface Window { __route?: boolean }
@@ -244,6 +244,8 @@ if (!reduce) {
   safe('checkpoint', checkpoint);
   safe('workproof', workproof);
   safe('patch', patchCable);
+  safe('builds', () => buildRows(fine));
+  safe('labs', () => labsCapture(() => innerWidth >= 900));
   safe('cursor', cursor);
   safe('magnetic', () => magnetic(document.querySelectorAll<HTMLElement>('.btn, .big')));
   safe('numerals', () => numerals(lenis));

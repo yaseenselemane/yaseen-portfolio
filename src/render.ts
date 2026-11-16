@@ -139,7 +139,7 @@ function builds() {
   return hop(6, 'builds', b.host, '', b.label, `
     <ul class="rows">${b.items
       .map(
-        (i) => `<li data-reveal><span class="name">${esc(i.name)}</span><span class="line">${esc(i.line)}</span><span class="stack">${esc(i.stack)}</span>${i.href ? ext({ label: 'repo', href: i.href }, 'link') : '<span class="nolink"></span>'}</li>`,
+        (i) => `<li data-reveal data-repo="${i.href ? esc(i.href.replace('https://', '')) : ''}"><span class="name">${esc(i.name)}</span><span class="line">${esc(i.line)}</span><span class="stack">${esc(i.stack)}</span>${i.href ? ext({ label: 'repo', href: i.href }, 'link') : '<span class="nolink"></span>'}</li>`,
       )
       .join('')}</ul>`);
 }
@@ -149,7 +149,7 @@ function labs() {
   return hop(7, 'labs', l.host, '', l.label, `
     <div class="pcap" data-reveal>
       <table>
-        <caption><span>${esc(l.host)}</span> ${l.rows.length} packets captured</caption>
+        <caption><span>${esc(l.host)}</span> <span class="cap-n">${l.rows.length} packets captured</span></caption>
         <thead><tr><th scope="col">No.</th><th scope="col">Protocol</th><th scope="col">Source</th><th scope="col">Info</th></tr></thead>
         <tbody>${l.rows
           .map(

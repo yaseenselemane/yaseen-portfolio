@@ -5,8 +5,9 @@ import { TextPlugin } from 'gsap/TextPlugin';
 import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
 import { Draggable } from 'gsap/Draggable';
+import { ScrambleTextPlugin } from 'gsap/ScrambleTextPlugin';
 
-gsap.registerPlugin(ScrollTrigger, TextPlugin, DrawSVGPlugin, MotionPathPlugin, Draggable);
+gsap.registerPlugin(ScrollTrigger, TextPlugin, DrawSVGPlugin, MotionPathPlugin, Draggable, ScrambleTextPlugin);
 const root = document.documentElement;
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', html = '') =>
   Object.assign(document.createElement(tag), { className: cls, innerHTML: html });
@@ -277,4 +278,97 @@ export function patchCable() {
   layout();
   document.fonts.ready.then(layout);
   new ResizeObserver(layout).observe(rack);
+}
+
+/** Hop 6: rows flood amber; on a pointer a preview panel follows and skews with speed, on touch the centred row lights. */
+export function buildRows(fine: boolean) {
+  const rows = [...document.querySelectorAll<HTMLElement>('.rows li')];
+  if (!fine) {
+    rows.forEach((li) => ScrollTrigger.create({ trigger: li, start: 'top 58%', end: 'bottom 42%', toggleClass: 'active' }));
+    return;
+  }
+  const panel = el('div', 'bp-panel');
+  panel.setAttribute('aria-hidden', 'true');
+  document.body.append(panel);
+  const px = gsap.quickTo(panel, 'x', { duration: 0.45, ease: 'power3' });
+  const py = gsap.quickTo(panel, 'y', { duration: 0.45, ease: 'power3' });
+  const skew = gsap.quickTo(panel, 'skewX', { duration: 0.4, ease: 'power3' });
+  const rot = gsap.quickTo(panel, 'rotate', { duration: 0.6, ease: 'power3' });
+  let lastX = 0;
+  const show = (li: HTMLElement) => {
+    const t = (s: string) => li.querySelector(s)?.textContent ?? '';
+    panel.innerHTML = `<b>${t('.name')}</b><p>${t('.line')}</p><div>${t('.stack')}</div><div class="bp-path">${li.dataset.repo || 'no public link'}</div>`;
+    gsap.to(panel, { autoAlpha: 1, scale: 1, duration: 0.3, overwrite: 'auto' });
+  };
+  const hide = () => gsap.to(panel, { autoAlpha: 0, scale: 0.9, duration: 0.25, overwrite: 'auto' });
+  rows.forEach((li) => {
+    li.addEventListener('pointerenter', () => show(li));
+    li.addEventListener('focusin', () => {
+      const r = li.getBoundingClientRect();
+      px(Math.min(innerWidth - 320, r.right - 320)); py(r.top - 40);
+      show(li);
+    });
+    li.addEventListener('focusout', hide);
+  });
+  document.querySelector('.rows')!.addEventListener('pointerleave', hide);
+  addEventListener('pointermove', (e) => {
+    const vx = e.clientX - lastX;
+    lastX = e.clientX;
+    // Keep the panel on screen: flip to the left of the pointer near the right edge.
+    px(e.clientX + (e.clientX > innerWidth - 360 ? -330 : 28));
+    py(e.clientY - 60);
+    skew(gsap.utils.clamp(-18, 18, -vx * 0.6));
+    rot(gsap.utils.clamp(-6, 6, vx * 0.2));
+  }, { passive: true });
+}
+
+/** Hop 7: the capture streams in row by row with a live counter; the selected packet drives a hex dump. */
+export function labsCapture(wide: () => boolean) {
+  const pcap = document.querySelector<HTMLElement>('.pcap')!;
+  const rows = [...pcap.querySelectorAll<HTMLTableRowElement>('tbody tr')];
+  const count = pcap.querySelector<HTMLElement>('.cap-n')!;
+  const final = count.textContent!;
+  gsap.set(rows, { autoAlpha: 0, x: -12 });
+  ScrollTrigger.create({
+    trigger: pcap, start: 'top 75%', once: true,
+    onEnter: () => {
+      gsap.to(rows, {
+        autoAlpha: 1, x: 0, duration: 0.35, stagger: 0.22, ease: 'power2.out',
+        onStart: () => (count.textContent = 'capturing... 0 packets'),
+      });
+      rows.forEach((_, i) => gsap.delayedCall(i * 0.22 + 0.2, () => {
+        count.textContent = i === rows.length - 1 ? final : `capturing... ${i + 1} packets`;
+        if (i === 0 && wide()) select(0);
+      }));
+    },
+  });
+
+  // Hex dump of the real bytes of "<source>: <info>", 8 per line, decoding in.
+  const dump = el('aside', 'hexdump');
+  dump.setAttribute('aria-hidden', 'true');
+  pcap.append(dump);
+  pcap.classList.add('has-hex');
+  const enc = new TextEncoder();
+  const select = (i: number) => {
+    if (!wide()) return;
+    const r = rows[i];
+    rows.forEach((x) => x.classList.toggle('sel', x === r));
+    const cell = (c: string) => r.querySelector(c)!.textContent!;
+    const bytes = [...enc.encode(`${cell('.src')}: ${cell('.info')}`)];
+    const lines: string[] = [];
+    for (let o = 0; o < bytes.length; o += 8) {
+      const chunk = bytes.slice(o, o + 8);
+      const hex = chunk.map((b) => b.toString(16).padStart(2, '0')).join(' ').padEnd(23, ' ');
+      const ascii = chunk.map((b) => (b >= 32 && b < 127 ? String.fromCharCode(b) : '.')).join('');
+      lines.push(`${o.toString(16).padStart(4, '0')}  ${hex}  ${ascii}`);
+    }
+    dump.innerHTML = `<div class="hx-head">Frame ${i + 1}: ${cell('.proto')} · ${bytes.length} bytes</div>` +
+      lines.map(() => '<div class="hx-line"></div>').join('');
+    dump.querySelectorAll<HTMLElement>('.hx-line').forEach((ln, k) =>
+      gsap.to(ln, { duration: 0.6, delay: k * 0.04, scrambleText: { text: lines[k], chars: '0123456789abcdef', speed: 0.8 } }));
+  };
+  rows.forEach((r, i) => {
+    r.addEventListener('pointerenter', () => select(i));
+    r.addEventListener('focusin', () => select(i));
+  });
 }

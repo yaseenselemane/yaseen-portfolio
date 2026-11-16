@@ -236,20 +236,39 @@ figcaption .fig { color: var(--text); opacity: 0.5; margin-right: 0.6em; }
   .split { grid-template-columns: 7fr 5fr; gap: 56px; align-items: center; }
 }
 
-/* ---------- hop 6: other routes ---------- */
+/* ---------- hop 6: other routes, as huge type rows ---------- */
 .rows li {
-  display: grid; gap: 4px 24px; padding: 22px 0; border-top: 1px solid var(--line); max-width: none;
-  grid-template-columns: 1fr auto;
+  position: relative; isolation: isolate; display: grid; grid-template-columns: 1fr auto; gap: 8px 24px;
+  padding: 26px 0 22px; border-top: 1px solid var(--line); max-width: none;
 }
 .rows li:last-child { border-bottom: 1px solid var(--line); }
-.rows .name { font-size: clamp(1.25rem, 2vw, 1.625rem); letter-spacing: -0.01em; grid-column: 1; }
-.rows .line { color: var(--muted); grid-column: 1 / -1; max-width: 60ch; }
-.rows .stack { margin: 4px 0 0; grid-column: 1; font-family: var(--mono); }
-.rows .link, .rows .nolink { grid-column: 2; grid-row: 1; justify-self: end; align-self: baseline; font: 13px var(--mono); }
-@media (min-width: 900px) {
-  .rows li { grid-template-columns: 14rem 1fr 11rem 4rem; align-items: baseline; }
-  .rows .name, .rows .line, .rows .stack, .rows .link, .rows .nolink { grid-column: auto; grid-row: auto; margin: 0; }
+.rows .name {
+  grid-column: 1 / -1; font: 700 clamp(2.25rem, 7.5vw, 6.5rem)/0.95 var(--display);
+  font-variation-settings: 'wdth' 108; letter-spacing: -0.035em; transition: color 0.3s;
 }
+.rows .line { grid-column: 1; color: var(--muted); max-width: 60ch; transition: color 0.3s; }
+.rows .stack { grid-column: 1; margin: 0; font-family: var(--mono); transition: color 0.3s; }
+.rows .link, .rows .nolink { grid-column: 2; grid-row: 2; justify-self: end; align-self: baseline; font: 13px var(--mono); }
+.rows .link::after { content: ''; position: absolute; inset: 0; } /* the whole row is the link */
+@media (min-width: 900px) {
+  .rows li { grid-template-columns: minmax(0, 1fr) 14rem 5rem; align-items: baseline; }
+  .rows .stack { grid-column: 2; grid-row: 2; }
+  .rows .link, .rows .nolink { grid-column: 3; }
+}
+.motion .rows li::before {
+  content: ''; position: absolute; inset: 0 -12px; z-index: -1; background: var(--amber);
+  transform: scaleY(0); transform-origin: bottom; transition: transform 0.5s var(--ease);
+}
+.motion .rows li:is(:hover, :focus-within, .active)::before { transform: none; }
+.motion .rows li:is(:hover, :focus-within, .active) :is(.name, .line, .stack, .link, .arrow) { color: var(--bg); text-decoration-color: var(--bg); }
+.bp-panel {
+  position: fixed; left: 0; top: 0; z-index: 45; width: 300px; pointer-events: none; visibility: hidden;
+  padding: 18px 20px; background: #0b0e14; border: 1px solid var(--line); border-top: 3px solid var(--amber); border-radius: 4px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6); font: 12px/1.5 var(--mono); color: var(--muted);
+}
+.bp-panel b { display: block; font: 700 26px/1 var(--display); color: var(--text); margin-bottom: 10px; }
+.bp-panel p { margin: 0 0 10px; font: 14px/1.45 var(--sans); color: var(--text); }
+.bp-panel .bp-path { color: var(--amber); word-break: break-all; }
 
 /* ---------- hop 7: labs.pcap ---------- */
 .pcap { font-family: var(--mono); font-size: 13px; }
@@ -499,3 +518,16 @@ html:not(.motion) .route .lit-glow, html:not(.motion) .route .halo, html:not(.mo
 .up .rk-status { color: var(--up); }
 .btn.lit { box-shadow: 0 0 0 0 rgba(255, 178, 36, 0.7); animation: lit 1.4s ease-out infinite; }
 @keyframes lit { to { box-shadow: 0 0 0 16px rgba(255, 178, 36, 0); } }
+
+/* ---------- hop 7 scene: live capture + hex dump ---------- */
+.hexdump { display: none; }
+@media (min-width: 900px) {
+  .motion .pcap.has-hex { display: grid; grid-template-columns: minmax(0, 1fr) 21rem; gap: 28px; align-items: start; }
+  .motion .hexdump {
+    display: block; position: sticky; top: 96px; min-height: 260px; padding: 16px 18px;
+    background: #080a0f; border: 1px solid var(--line); border-radius: 4px;
+    font: 12px/1.7 var(--mono); color: var(--muted); white-space: pre; overflow: hidden;
+  }
+  .hx-head { color: var(--amber); margin-bottom: 10px; white-space: normal; }
+  .pcap tbody tr.sel { background: rgba(255, 178, 36, 0.12); }
+}
