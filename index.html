@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>%TITLE%</title>
+  <meta name="description" content="%DESCRIPTION%">
+  <meta name="theme-color" content="#0B0E14">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="%TITLE%">
+  <meta property="og:description" content="%DESCRIPTION%">
+  <meta property="og:image" content="/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap">
+  <script>
+    // js: scripting is on. motion: animations allowed (?motion forces it, for testing on machines with animations off).
+    // Drop motion if the module never boots, so nothing stays hidden.
+    (function (d) {
+      d.classList.add('js');
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches || /[?&]motion/.test(location.search)) d.classList.add('motion');
+      setTimeout(function () { if (!window.__route) d.classList.remove('motion'); }, 3000);
+    })(document.documentElement);
+  </script>
+  <script type="module" src="/src/main.ts"></script>
+</head>
+<body>
+<!--page-->
+</body>
+</html>
