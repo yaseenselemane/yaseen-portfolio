@@ -1,5 +1,5 @@
 // Builds the page body from content.ts. Runs in Node at build time, so the HTML works with JavaScript off.
-import * as c from './content';
+import * as c from './content.ts';
 
 const esc = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');

@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite';
-import { renderPage, meta } from './src/render';
+import { renderPage, meta } from './src/render.ts';
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 
