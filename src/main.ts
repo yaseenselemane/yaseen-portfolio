@@ -6,7 +6,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { TextPlugin } from 'gsap/TextPlugin';
 import { decode, preloader, cursor, magnetic, numerals, tints, minimap } from './fx.ts';
 import { field } from './field.ts';
-import { workproof } from './scenes.ts';
+import { workproof, checkpoint } from './scenes.ts';
 
 declare global {
   interface Window { __route?: boolean }
@@ -240,6 +240,7 @@ if (!reduce) {
     }) as EventListener, { once: true });
   });
 
+  safe('checkpoint', checkpoint);
   safe('workproof', workproof);
   safe('cursor', cursor);
   safe('magnetic', () => magnetic(document.querySelectorAll<HTMLElement>('.btn, .big')));

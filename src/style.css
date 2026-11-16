@@ -434,3 +434,20 @@ html:not(.motion) .route .lit-glow, html:not(.motion) .route .halo, html:not(.mo
   .wp-slam b { font-size: 19vw; }
   .wp-reel { display: none; }
 }
+
+/* ---------- hop 3 scene: the checkpoint gate ---------- */
+.gate-half { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.gate-status { color: var(--amber); }
+.motion .acl li { position: relative; overflow: hidden; }
+.scan {
+  position: absolute; top: 0; bottom: 0; left: 0; width: 25%; visibility: hidden; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 178, 36, 0.35), transparent);
+  border-right: 1px solid var(--amber);
+}
+.stamp {
+  position: absolute; right: 4px; top: 50%; margin-top: -18px; visibility: hidden;
+  font: 700 18px/1 var(--mono); letter-spacing: 0.14em; color: var(--up);
+  border: 2px solid var(--up); padding: 8px 12px; border-radius: 3px;
+  text-shadow: 0 0 18px rgba(61, 220, 151, 0.6); box-shadow: 0 0 24px rgba(61, 220, 151, 0.25);
+}
+@media (max-width: 520px) { .stamp { font-size: 12px; padding: 5px 8px; margin-top: -12px; top: 22px; } }

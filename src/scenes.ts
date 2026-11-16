@@ -1,8 +1,9 @@
 // Directed scenes per hop. Each one only adds motion on top of the static page, which stays complete without it.
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { TextPlugin } from 'gsap/TextPlugin';
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, TextPlugin);
 const root = document.documentElement;
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', html = '') =>
   Object.assign(document.createElement(tag), { className: cls, innerHTML: html });
@@ -112,5 +113,68 @@ export function workproof() {
         .fromTo(panels, { rotateY: -38, z: -200 }, { rotateY: 24, z: 80, duration: 1, stagger: 0.04 }, '<');
     }
     return () => gsap.set([mask, slam, slam.children, dim, stage, track, reel], { clearProps: 'all' });
+  });
+}
+
+/** Hop 3: each certification is evaluated at the gate (types out, scan, PERMIT stamp), then the gate splits open. */
+export function checkpoint() {
+  const sec = document.querySelector<HTMLElement>('#certifications')!;
+  const gate = sec.querySelector<HTMLElement>('.wrap')!;
+  const head = gate.querySelector<HTMLElement>('.acl-head')!;
+  // Screen readers keep the full rule text; the typed copy is decoration.
+  gate.querySelectorAll<HTMLElement>('.cert .name').forEach((n) => {
+    n.insertAdjacentHTML('afterend', `<span class="sr-only">${n.textContent}</span>`);
+    n.setAttribute('aria-hidden', 'true');
+    n.dataset.full = n.textContent ?? '';
+  });
+  gate.querySelectorAll('.acl li').forEach((li) =>
+    li.insertAdjacentHTML('beforeend', '<i class="scan" aria-hidden="true"></i><b class="stamp" aria-hidden="true">PERMIT</b>'));
+  head.insertAdjacentHTML('beforeend', ' <span class="gate-status" aria-hidden="true">· evaluating</span>');
+
+  // The right half of the gate is a copy that only appears when the gate splits.
+  const half = gate.cloneNode(true) as HTMLElement;
+  half.classList.add('gate-half');
+  half.setAttribute('aria-hidden', 'true');
+  half.inert = true;
+  half.querySelector('h2')?.removeAttribute('data-decode');
+  half.querySelector('h2')?.removeAttribute('id');
+  half.querySelectorAll('[data-reveal]').forEach((e) => e.removeAttribute('data-reveal'));
+  sec.append(half);
+  const both = (s: string) => [...gate.querySelectorAll(s), ...half.querySelectorAll(s)];
+  const lis = [gate.querySelectorAll('.acl li'), half.querySelectorAll('.acl li')];
+
+  gsap.matchMedia().add('(min-width: 0px)', () => {
+    gsap.set(half, { autoAlpha: 0 });
+    gsap.set(both('.acl li'), { opacity: 0.18 });
+    gsap.set(both('.cert .name'), { text: '' });
+    gsap.set(both('.permit, .stamp'), { autoAlpha: 0 });
+    const tl = gsap.timeline({
+      defaults: { ease: 'none' },
+      scrollTrigger: {
+        trigger: sec, pin: true, scrub: 0.5, invalidateOnRefresh: true, onToggle: pinFade,
+        start: () => (sec.offsetHeight > innerHeight ? 'bottom bottom' : 'top top'),
+        end: () => `+=${innerHeight * (innerWidth < 900 ? 1.7 : 2.1)}`,
+      },
+    });
+    lis[0].forEach((_, i) => {
+      const pair = (s: string) => [lis[0][i].querySelector(s), lis[1][i].querySelector(s)];
+      const li = [lis[0][i], lis[1][i]];
+      tl.to(li, { opacity: 1, duration: 0.15 })
+        .call(() => both('.gate-status').forEach((s) => (s.textContent = `· evaluating ${i + 1}/4`)))
+        .to(pair('.cert .name'), { text: { value: (lis[0][i].querySelector('.name') as HTMLElement).dataset.full! }, duration: 0.6 })
+        .fromTo(pair('.scan'), { xPercent: -100, autoAlpha: 1 }, { xPercent: 420, duration: 0.35 }, '<0.3')
+        .set(pair('.scan'), { autoAlpha: 0 })
+        .fromTo(pair('.stamp'), { scale: 2.8, rotate: -24, autoAlpha: 0 }, { scale: 1, rotate: -8, autoAlpha: 1, duration: 0.12, ease: 'expo.in' })
+        .to(pair('.permit'), { autoAlpha: 1, duration: 0.05 }, '<')
+        .fromTo(li, { backgroundColor: 'rgba(61, 220, 151, 0.28)' }, { backgroundColor: 'rgba(61, 220, 151, 0)', duration: 0.3 })
+        .fromTo([gate, half], { x: -10 }, { x: 0, duration: 0.25, ease: 'elastic.out(1, 0.25)' }, '<');
+    });
+    tl.call(() => both('.gate-status').forEach((s) => (s.textContent = '· 4/4 permit, open')))
+      .to({}, { duration: 0.25 })
+      .set(half, { autoAlpha: 1, clipPath: 'inset(0 0 0 50%)' })
+      .set(gate, { clipPath: 'inset(0 50% 0 0)' })
+      .to(gate, { xPercent: -55, autoAlpha: 0, duration: 0.8, ease: 'power2.in' })
+      .to(half, { xPercent: 55, autoAlpha: 0, duration: 0.8, ease: 'power2.in' }, '<');
+    return () => gsap.set([gate, half, ...both('.acl li, .permit, .stamp, .scan, .cert .name')], { clearProps: 'all' });
   });
 }
