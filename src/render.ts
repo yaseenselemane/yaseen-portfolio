@@ -81,7 +81,7 @@ function workproof() {
     </figure>
     <div class="shots">
       ${fig(xray, 'xray', 2)}${fig(phone, 'phone', 3)}${fig(blind, 'blind', 4)}${fig(receipt, 'receipt', 5)}
-    </div>`, 'side-r flagship');
+    </div>`, 'flagship');
 }
 
 function tierOne() {
@@ -104,7 +104,7 @@ function builds() {
       .map(
         (i) => `<li data-reveal><span class="name">${esc(i.name)}</span><span class="line">${esc(i.line)}</span><span class="stack">${esc(i.stack)}</span>${i.href ? ext({ label: 'repo', href: i.href }, 'link') : '<span class="nolink"></span>'}</li>`,
       )
-      .join('')}</ul>`, 'side-r');
+      .join('')}</ul>`);
 }
 
 function labs() {

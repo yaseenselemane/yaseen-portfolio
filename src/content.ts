@@ -43,7 +43,7 @@ export const certs = {
   host: 'checkpoint',
   label: 'Certifications',
   items: [
-    { name: 'Microsoft Certified: Azure Network Engineer Associate (AZ-700)', issuer: 'Microsoft', date: 'Sep 2026' },
+    { name: 'Microsoft Certified: Azure Network Engineer Associate (AZ‑700)', issuer: 'Microsoft', date: 'Sep 2026' },
     { name: 'Network Security (intermediate, exam passed)', issuer: 'Cisco', date: 'Jul 2026' },
     { name: 'Introduction to Cybersecurity', issuer: 'Cisco', date: 'Jan 2026' },
     { name: 'Learning path: Mitigate threats using Microsoft Defender XDR', issuer: 'Microsoft Learn', date: 'Jun 2026' },
@@ -69,10 +69,10 @@ export const workproof = {
   ] as Link[],
   video: { src: '/media/workproof-demo.mp4', poster: '/media/workproof-poster.webp', w: 960, h: 540 },
   shots: [
-    { src: '/media/wp-ad-xray.webp', w: 1440, h: 810, caption: 'Job-ad X-ray', alt: 'WorkProof job-ad X-ray marking each line of a job ad as a proxy, a trainable tool or a real task' },
-    { src: '/media/wp-phone-answers.webp', w: 600, h: 1300, caption: 'Candidate answers on a phone', alt: 'WorkProof candidate view on a phone, answering the work sample' },
-    { src: '/media/wp-blind-scoring.webp', w: 1440, h: 810, caption: 'Blind scoring', alt: 'WorkProof blind scoring screen, candidates shown by number against the scoring sheet' },
-    { src: '/media/wp-decision-receipt.webp', w: 1440, h: 810, caption: 'Decision receipt', alt: 'WorkProof decision receipt recording why each candidate was chosen' },
+    { src: '/media/wp-ad-xray.webp', w: 1440, h: 810, caption: 'Job-ad X-ray', alt: 'WorkProof ad X-ray: each requirement in a sample job ad marked as a proxy, a trainable tool or a real task' },
+    { src: '/media/wp-phone-answers.webp', w: 600, h: 1300, caption: 'Candidate answers on a phone', alt: 'WorkProof work sample on a candidate’s phone: errors found in a ledger and a note to the owner, with the timer running' },
+    { src: '/media/wp-blind-scoring.webp', w: 1440, h: 810, caption: 'Blind scoring', alt: 'WorkProof blind scoring: a candidate’s answers scored against a four-level sheet, name hidden until everyone is scored' },
+    { src: '/media/wp-decision-receipt.webp', w: 1440, h: 810, caption: 'Decision receipt', alt: 'WorkProof decision receipt listing each score, the decision and the result email' },
   ],
 };
 
@@ -84,7 +84,7 @@ export const tierOne = {
   stack: 'Plain JavaScript',
   play: { label: 'Play it', href: 'https://tier-one.pages.dev' },
   repo: { label: 'Repo', href: 'https://github.com/yaseenselemane/tier-one-network-ops' },
-  shot: { src: '/media/tier-one.webp', w: 1440, h: 900, alt: 'Tier One: Network Operations running in the browser' },
+  shot: { src: '/media/tier-one.webp', w: 1440, h: 900, alt: 'Tier One: Network Operations in the browser, an isometric office floor with a server room, desks waiting to be cabled and the day-one lesson open' },
 };
 
 export const builds = {

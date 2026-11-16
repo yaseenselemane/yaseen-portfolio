@@ -141,7 +141,7 @@ a:hover .arrow { color: var(--amber); transform: translate(2px, -2px); }
 .trace .lead::before { content: '................................................................................................................................................................................'; }
 .trace .t { min-width: 6ch; text-align: right; color: var(--amber); }
 @media (min-width: 900px) {
-  .side-r .wrap > :not(.trace, .shots, .demo, .rows, .pcap, .split) { margin-left: auto; width: min(60ch, 100%); }
+  .side-r .wrap > :not(.trace, .shots, .demo, .rows, .pcap, .split, .pipeline) { margin-left: auto; width: min(36rem, 100%); max-width: none; }
 }
 
 /* reveal */
@@ -167,3 +167,119 @@ a:hover .arrow { color: var(--amber); transform: translate(2px, -2px); }
 .hud .dot { width: 6px; height: 6px; }
 @media (min-width: 900px) { .hud { padding-left: 24px; padding-right: 24px; } }
 .motion body { padding-bottom: 48px; }
+
+/* ---------- hop 1: origin ---------- */
+.pull { margin-top: 48px; padding-left: 20px; border-left: 1px solid var(--amber); }
+.pull p { font-size: clamp(1.25rem, 2.2vw, 1.75rem); line-height: 1.35; letter-spacing: -0.01em; max-width: 26ch; }
+
+/* ---------- hop 2: field work ---------- */
+.org { font-size: clamp(1.125rem, 1.6vw, 1.375rem); margin-bottom: 32px; }
+.org .role { display: block; font: 12px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.points li { padding: 14px 0; border-top: 1px solid var(--line); color: var(--muted); }
+.points li:last-child { border-bottom: 1px solid var(--line); }
+.more { margin-top: 32px; }
+
+/* ---------- hop 3: certifications as an ACL ---------- */
+.acl-head { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.acl li {
+  display: grid; grid-template-columns: 3ch 7ch 1fr; column-gap: 1.25ch; align-items: baseline;
+  padding: 18px 0; border-top: 1px solid var(--line); max-width: none;
+}
+.acl li:last-child { border-bottom: 1px solid var(--line); }
+.seq, .permit { font-size: 13px; }
+.seq { color: var(--muted); }
+.permit { color: var(--up); }
+.cert .name { display: block; font-size: clamp(1.0625rem, 1.5vw, 1.3125rem); line-height: 1.35; }
+.cert .meta { display: block; margin-top: 6px; font-size: 12px; color: var(--muted); }
+.links { display: flex; flex-wrap: wrap; gap: 12px 32px; margin-top: 32px; }
+@media (max-width: 520px) {
+  .acl li { grid-template-columns: 2.5ch 1fr; }
+  .acl .cert { grid-column: 2; }
+}
+
+/* ---------- hop 4: WorkProof ---------- */
+.flagship h2 { font-size: clamp(3.5rem, 12vw, 10rem); line-height: 0.92; letter-spacing: -0.045em; max-width: none; }
+.award { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; }
+.award .place { font-size: clamp(1.125rem, 1.6vw, 1.375rem); color: var(--amber); }
+.award .note { font-size: 12px; color: var(--muted); letter-spacing: 0.06em; }
+.tagline {
+  margin-top: 48px;
+  font-size: clamp(1.75rem, 4vw, 3.25rem); line-height: 1.1; letter-spacing: -0.025em; max-width: 18ch;
+}
+.pipeline { margin-top: 48px; counter-reset: s; }
+.pipeline li { display: flex; gap: 16px; align-items: baseline; padding: 12px 0; border-top: 1px solid var(--line); }
+.pipeline li:last-child { border-bottom: 1px solid var(--line); }
+.pipeline .step { font-size: 12px; color: var(--amber); }
+.demo { margin-top: clamp(64px, 10vh, 120px); }
+.demo video { width: 100%; background: var(--raised); border: 1px solid var(--line); border-radius: 4px; }
+figcaption { margin-top: 12px; font-size: 12px; color: var(--muted); }
+figcaption .fig { color: var(--text); opacity: 0.5; margin-right: 0.6em; }
+.shots { margin-top: 48px; display: grid; gap: 48px 24px; }
+.shots img { width: 100%; border: 1px solid var(--line); border-radius: 4px; background: var(--raised); }
+.shots .phone img { width: min(100%, 240px); }
+@media (min-width: 900px) {
+  .shots { grid-template-columns: repeat(12, 1fr); align-items: start; }
+  .shots .xray { grid-column: 1 / span 8; }
+  .shots .phone { grid-column: 10 / span 3; grid-row: 1 / span 2; margin-top: 120px; }
+  .shots .phone img { width: 100%; }
+  .shots .blind { grid-column: 2 / span 7; }
+  .shots .receipt { grid-column: 4 / span 9; }
+  .pipeline { display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .pipeline li { flex-direction: column; gap: 10px; padding: 20px 16px 24px 0; border: 0; font-size: 1rem; }
+  .pipeline li + li { padding-left: 16px; border-left: 1px solid var(--line); }
+}
+
+/* ---------- hop 5: Tier One ---------- */
+.split { display: grid; gap: 40px; }
+.game img { width: 100%; border: 1px solid var(--line); border-radius: 4px; background: var(--raised); }
+@media (min-width: 900px) {
+  .split { grid-template-columns: 7fr 5fr; gap: 56px; align-items: center; }
+}
+
+/* ---------- hop 6: other routes ---------- */
+.rows li {
+  display: grid; gap: 4px 24px; padding: 22px 0; border-top: 1px solid var(--line); max-width: none;
+  grid-template-columns: 1fr auto;
+}
+.rows li:last-child { border-bottom: 1px solid var(--line); }
+.rows .name { font-size: clamp(1.25rem, 2vw, 1.625rem); letter-spacing: -0.01em; grid-column: 1; }
+.rows .line { color: var(--muted); grid-column: 1 / -1; max-width: 60ch; }
+.rows .stack { margin: 4px 0 0; grid-column: 1; font-family: var(--mono); }
+.rows .link, .rows .nolink { grid-column: 2; grid-row: 1; justify-self: end; align-self: baseline; font: 13px var(--mono); }
+@media (min-width: 900px) {
+  .rows li { grid-template-columns: 14rem 1fr 11rem 4rem; align-items: baseline; }
+  .rows .name, .rows .line, .rows .stack, .rows .link, .rows .nolink { grid-column: auto; grid-row: auto; margin: 0; }
+}
+
+/* ---------- hop 7: labs.pcap ---------- */
+.pcap { font-family: var(--mono); font-size: 13px; }
+.pcap table { width: 100%; border-collapse: collapse; }
+.pcap caption { text-align: left; color: var(--muted); padding-bottom: 12px; font-size: 12px; }
+.pcap caption span { color: var(--text); margin-right: 1ch; }
+.pcap th { text-align: left; font-weight: 400; color: var(--muted); padding: 10px 12px; background: var(--raised); border-block: 1px solid var(--line); }
+.pcap td { padding: 12px; border-bottom: 1px solid var(--line); vertical-align: baseline; }
+.pcap tbody tr { position: relative; transition: background 0.2s, color 0.2s; }
+.pcap .no { color: var(--muted); width: 4ch; }
+.pcap .proto { width: 9ch; }
+.pcap .src a { text-decoration: none; }
+.pcap .src a::after { content: ''; position: absolute; inset: 0; } /* whole row is the link */
+.pcap .info { color: var(--muted); font-family: var(--sans); font-size: 15px; }
+.pcap tbody tr:hover, .pcap tbody tr:focus-within { background: var(--amber); color: var(--bg); }
+.pcap tbody tr:hover td, .pcap tbody tr:focus-within td { color: var(--bg); }
+.pcap tbody tr:focus-within a { outline: none; }
+@media (max-width: 720px) {
+  .pcap thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .pcap tbody tr { display: grid; grid-template-columns: 3ch 1fr; column-gap: 1ch; padding: 14px 8px; border-bottom: 1px solid var(--line); }
+  .pcap td { padding: 0; border: 0; width: auto !important; }
+  .pcap .no { grid-row: 1 / span 3; }
+  .pcap .proto { color: var(--muted); font-size: 12px; }
+  .pcap .info { margin-top: 4px; }
+}
+
+/* ---------- hop 8: destination ---------- */
+.dest .wrap { min-height: 80vh; min-height: 80svh; padding-bottom: 96px; }
+.summary { font-size: 13px; color: var(--muted); }
+.summary b { font-weight: 400; color: var(--amber); }
+.reply { margin-top: 24px; font-size: clamp(1.375rem, 2.6vw, 2.125rem); line-height: 1.25; letter-spacing: -0.015em; max-width: 30ch; }
+.contact { display: flex; flex-wrap: wrap; gap: 8px 48px; margin-top: 48px; }
+.big { font-size: clamp(2rem, 5vw, 4rem); letter-spacing: -0.03em; line-height: 1.1; }

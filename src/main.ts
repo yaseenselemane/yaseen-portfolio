@@ -61,8 +61,8 @@ function build() {
   let d = `M${xL},${y0}`;
   let cx = xL;
   const pts = [{ x: xL, y: y0 }];
-  hops.forEach((h) => {
-    const x = desktop && h.classList.contains('side-r') ? xR : xL;
+  hops.forEach((h, i) => {
+    const x = desktop && i % 2 ? xR : xL; // even hops ride the right lane on desktop
     const top = rel(h).y;
     const t = rel(h.querySelector('[data-node]')!);
     const ny = t.y + t.h / 2;
