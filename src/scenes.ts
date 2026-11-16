@@ -4,8 +4,9 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { TextPlugin } from 'gsap/TextPlugin';
 import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
+import { Draggable } from 'gsap/Draggable';
 
-gsap.registerPlugin(ScrollTrigger, TextPlugin, DrawSVGPlugin, MotionPathPlugin);
+gsap.registerPlugin(ScrollTrigger, TextPlugin, DrawSVGPlugin, MotionPathPlugin, Draggable);
 const root = document.documentElement;
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', html = '') =>
   Object.assign(document.createElement(tag), { className: cls, innerHTML: html });
@@ -206,4 +207,74 @@ export function devland() {
     .to(fig.querySelector('.r1 rect'), { stroke: '#8a93a6', duration: 0.1 }, '<0.3')
     .fromTo(fig.querySelector('.allow'), { autoAlpha: 0, scale: 2.4, transformOrigin: '50% 50%' }, { autoAlpha: 1, scale: 1, duration: 0.15, ease: 'expo.in' })
     .to(fig.querySelector('.nvr rect'), { stroke: '#3ddc97', fill: 'rgba(61,220,151,0.15)', duration: 0.2 }, '<');
+}
+
+/** Hop 5: drag (or press) the patch cable from YOU into the switch; the ports light and Play it wakes up. */
+export function patchCable() {
+  const rack = document.querySelector<HTMLElement>('[data-rack]')!;
+  rack.hidden = false;
+  const you = rack.querySelector<HTMLElement>('[data-you]')!;
+  const ports = [...rack.querySelectorAll<HTMLElement>('.rk-ports i')];
+  const plug = rack.querySelector<HTMLButtonElement>('.rk-plug')!;
+  const svg = rack.querySelector<SVGSVGElement>('.rk-cable')!;
+  const path = svg.querySelector('path')!;
+  const status = rack.querySelector<HTMLElement>('.rk-status')!;
+  const play = rack.parentElement!.querySelector<HTMLElement>('.btn')!;
+  let a = { x: 0, y: 0 }, rest = { x: 0, y: 0 }, goal = { x: 0, y: 0 }, linked = false, dragged = false;
+
+  const centre = (e: Element) => {
+    const r = e.getBoundingClientRect(), k = rack.getBoundingClientRect();
+    return { x: r.left - k.left + r.width / 2, y: r.top - k.top + r.height / 2 };
+  };
+  // Cable from the YOU port to the plug, sagging more the further it reaches.
+  const draw = () => {
+    const b = centre(plug);
+    const sag = 24 + Math.hypot(b.x - a.x, b.y - a.y) * 0.3;
+    path.setAttribute('d', `M${a.x},${a.y} C${a.x + 30},${a.y + sag} ${b.x - 30},${b.y + sag} ${b.x},${b.y}`);
+  };
+  const layout = () => {
+    const k = rack.getBoundingClientRect();
+    svg.setAttribute('viewBox', `0 0 ${k.width} ${k.height}`);
+    a = centre(you);
+    a.x += you.offsetWidth / 2;
+    const p0 = centre(ports[0]);
+    rest = { x: a.x + 40, y: a.y + 44 };
+    goal = p0;
+    const at = linked ? goal : rest;
+    gsap.set(plug, { x: at.x - plug.offsetWidth / 2, y: at.y - plug.offsetHeight / 2 });
+    draw();
+  };
+  const moveTo = (p: { x: number; y: number }, ease: string, onComplete?: () => void) =>
+    gsap.to(plug, { x: p.x - plug.offsetWidth / 2, y: p.y - plug.offsetHeight / 2, duration: 0.7, ease, onUpdate: draw, onComplete });
+
+  const connect = () => {
+    if (linked) return;
+    linked = true;
+    drag.disable();
+    moveTo(goal, 'power3.out', () => {
+      gsap.timeline()
+        .to(ports, { backgroundColor: '#3ddc97', boxShadow: '0 0 10px rgba(61,220,151,0.9)', duration: 0.12, stagger: 0.07 })
+        .to(status, { text: 'link up · ready to play', duration: 0.6, ease: 'none' }, 0.1)
+        .add(() => { play.classList.add('lit'); rack.classList.add('up'); });
+      plug.setAttribute('aria-label', 'Cable patched. Link up.');
+    });
+  };
+
+  const drag = Draggable.create(plug, {
+    type: 'x,y', bounds: rack,
+    onPress: () => (dragged = false),
+    onDrag() { dragged = true; draw(); },
+    onRelease() {
+      if (!dragged) return;
+      const b = centre(plug);
+      if (Math.hypot(b.x - goal.x, b.y - goal.y) < 44) connect();
+      else moveTo(rest, 'elastic.out(1, 0.45)');
+    },
+  })[0];
+  // Tap, click or Enter/Space patches it in one go.
+  plug.addEventListener('click', () => { if (!dragged) connect(); });
+
+  layout();
+  document.fonts.ready.then(layout);
+  new ResizeObserver(layout).observe(rack);
 }

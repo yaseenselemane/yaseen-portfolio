@@ -122,6 +122,13 @@ function tierOne() {
       <div class="split-text">
         <p class="lede" data-reveal>${esc(t.body)}</p>
         <p class="stack" data-reveal><span class="k">stack</span> ${esc(t.stack)}</p>
+        <div class="rack" data-rack hidden>
+          <span class="rk-you" data-you>YOU</span>
+          <div class="rk-switch"><span class="rk-name">switch</span><span class="rk-ports">${'<i></i>'.repeat(8)}</span></div>
+          <svg class="rk-cable" aria-hidden="true"><path/></svg>
+          <button type="button" class="rk-plug" data-cursor="DRAG" aria-label="Patch the cable into the switch"></button>
+          <p class="rk-status" aria-live="polite">link down · drag or tap the cable</p>
+        </div>
         <p class="actions" data-reveal>${ext(t.play, 'btn', 'PLAY')}${ext(t.repo, 'link')}</p>
       </div>
     </div>`);

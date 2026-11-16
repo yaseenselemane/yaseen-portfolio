@@ -467,3 +467,35 @@ html:not(.motion) .route .lit-glow, html:not(.motion) .route .halo, html:not(.mo
 .dv-tag.allow { fill: var(--up) !important; }
 .devland figcaption { max-width: 46ch; }
 @media (min-width: 900px) { .side-r .wrap > .devland { width: min(34rem, 100%); } }
+
+/* ---------- hop 5 scene: the patch cable ---------- */
+.rack[hidden] { display: none; }
+.rack {
+  position: relative; margin-top: 28px; height: 150px; max-width: 30rem;
+  border: 1px solid var(--line); border-radius: 6px; background: linear-gradient(180deg, #121722, #0e121a);
+  touch-action: none;
+}
+.rk-you {
+  position: absolute; left: 16px; top: 22px; padding: 6px 10px;
+  font: 500 11px var(--mono); letter-spacing: 0.12em; color: var(--bg); background: var(--amber); border-radius: 2px;
+}
+.rk-switch {
+  position: absolute; right: 14px; top: 16px; padding: 8px 10px 10px;
+  background: #0b0e14; border: 1px solid var(--line); border-radius: 3px;
+}
+.rk-name { display: block; font: 10px var(--mono); color: var(--muted); letter-spacing: 0.1em; margin-bottom: 6px; }
+.rk-ports { display: grid; grid-template-columns: repeat(8, 14px); gap: 5px; }
+.rk-ports i { width: 14px; height: 12px; border-radius: 2px; background: #232a38; border: 1px solid #2f3747; }
+.rk-ports i:first-child { outline: 1px dashed rgba(255, 178, 36, 0.6); outline-offset: 2px; }
+.up .rk-ports i:first-child { outline: none; }
+.rk-cable { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.rk-cable path { fill: none; stroke: var(--amber); stroke-width: 4; stroke-linecap: round; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5)); }
+.rk-plug {
+  position: absolute; left: 0; top: 0; width: 22px; height: 16px; padding: 0; cursor: grab;
+  background: #e8e6e1; border: 0; border-radius: 3px; box-shadow: 0 0 0 3px rgba(255, 178, 36, 0.35), 0 6px 12px rgba(0, 0, 0, 0.5);
+}
+.rk-plug:active { cursor: grabbing; }
+.rk-status { position: absolute; left: 16px; bottom: 12px; font: 12px var(--mono); color: var(--muted); max-width: none; }
+.up .rk-status { color: var(--up); }
+.btn.lit { box-shadow: 0 0 0 0 rgba(255, 178, 36, 0.7); animation: lit 1.4s ease-out infinite; }
+@keyframes lit { to { box-shadow: 0 0 0 16px rgba(255, 178, 36, 0); } }
