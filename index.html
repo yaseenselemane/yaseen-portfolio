@@ -14,14 +14,20 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap">
   <script>
-    // js: scripting is on. motion: animations allowed (?motion forces it, for testing on machines with animations off).
-    // Drop motion if the module never boots, so nothing stays hidden.
+    // js: scripting is on. motion: the full experience. It follows prefers-reduced-motion unless the visitor chose
+    // otherwise (localStorage 'motion' = on/off) or the URL has ?motion. preload: show the preloader (once per tab).
+    // Safety nets: if the module never boots, drop motion; whatever happens, the preloader is gone after 4 s.
     (function (d) {
+      var pref = null, seen = null;
+      try { pref = localStorage.getItem('motion'); seen = sessionStorage.getItem('preloaded'); } catch (e) {}
+      var on = /[?&]motion/.test(location.search) || (pref ? pref === 'on' : !matchMedia('(prefers-reduced-motion: reduce)').matches);
       d.classList.add('js');
-      if (!matchMedia('(prefers-reduced-motion: reduce)').matches || /[?&]motion/.test(location.search)) d.classList.add('motion');
-      setTimeout(function () { if (!window.__route) d.classList.remove('motion'); }, 3000);
+      if (on) d.classList.add('motion');
+      if (on && !seen) d.classList.add('preload');
+      setTimeout(function () { if (!window.__route) d.classList.remove('motion', 'preload'); }, 3000);
+      setTimeout(function () { d.classList.remove('preload'); }, 4000);
     })(document.documentElement);
   </script>
   <script type="module" src="/src/main.ts"></script>

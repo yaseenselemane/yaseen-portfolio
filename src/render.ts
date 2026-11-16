@@ -4,18 +4,19 @@ import * as c from './content.ts';
 const esc = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-const ext = (l: c.Link, cls = '') =>
-  `<a class="${cls}" href="${esc(l.href)}" target="_blank" rel="noopener">${esc(l.label)}<span class="arrow" aria-hidden="true">↗</span></a>`;
+const ext = (l: c.Link, cls = '', cursor = '') =>
+  `<a class="${cls}" href="${esc(l.href)}" target="_blank" rel="noopener"${cursor ? ` data-cursor="${cursor}"` : ''}>${esc(l.label)}<span class="arrow" aria-hidden="true">↗</span></a>`;
 
 const trace = (n: number, host: string) =>
   `<div class="trace" data-node><span class="n">${n}</span><span class="host">${esc(host)}</span><span class="lead" aria-hidden="true"></span><span class="t" data-t></span></div>`;
 
 const hop = (n: number, id: string, host: string, label: string, title: string, body: string, cls = '') =>
-  `<section class="hop ${cls}" id="${id}" data-hop="${n}" aria-labelledby="h-${id}">
+  `<section class="hop ${cls}" id="${id}" data-hop="${n}" data-name="${esc(host)}" aria-labelledby="h-${id}">
+  <span class="numeral" aria-hidden="true">0${n}</span>
   <div class="wrap">
     ${trace(n, host)}
     ${label ? `<p class="eyebrow" data-reveal>${esc(label)}</p>` : ''}
-    <h2 id="h-${id}" data-reveal>${esc(title)}</h2>
+    <h2 id="h-${id}" data-decode>${esc(title)}</h2>
     ${body}
   </div>
 </section>`;
@@ -28,7 +29,7 @@ function hero() {
   return `<header class="hero">
   <div class="wrap">
     <p class="prompt" data-origin>${esc(h.prompt)}</p>
-    <h1 data-reveal>${esc(h.headline)}</h1>
+    <h1 data-decode>${esc(h.headline)}</h1>
     <p class="sub" data-reveal>${esc(h.sub)}</p>
     <p class="status" data-reveal><span class="dot" aria-hidden="true"></span>${esc(h.status)}</p>
   </div>
@@ -59,7 +60,7 @@ function certs() {
         (i, n) => `<li data-reveal><span class="seq" aria-hidden="true">${(n + 1) * 10}</span><span class="permit">permit</span><span class="cert"><span class="name">${esc(i.name)}</span><span class="meta">${esc(i.issuer)} · ${esc(i.date)}</span></span></li>`,
       )
       .join('')}</ol>
-    <p class="links" data-reveal>${k.links.map((l) => ext(l, 'link')).join('')}</p>`);
+    <p class="links" data-reveal>${k.links.map((l) => ext(l, 'link', 'VERIFY')).join('')}</p>`);
 }
 
 function workproof() {
@@ -92,7 +93,7 @@ function tierOne() {
       <div class="split-text">
         <p class="lede" data-reveal>${esc(t.body)}</p>
         <p class="stack" data-reveal><span class="k">stack</span> ${esc(t.stack)}</p>
-        <p class="actions" data-reveal>${ext(t.play, 'btn')}${ext(t.repo, 'link')}</p>
+        <p class="actions" data-reveal>${ext(t.play, 'btn', 'PLAY')}${ext(t.repo, 'link')}</p>
       </div>
     </div>`);
 }
@@ -128,21 +129,30 @@ function destination() {
   return hop(8, 'destination', d.host, '', d.label, `
     <p class="summary" data-reveal>Trace complete. 8 hops,<span data-total hidden> <b></b> s,</span> 0% packet loss.</p>
     <p class="reply" data-reveal>${esc(d.reply)}</p>
-    <p class="contact" data-reveal>${d.links.map((l) => ext(l, 'big')).join('')}</p>`, 'side-r dest');
+    <p class="contact" data-reveal>${d.links.map((l) => ext(l, 'big', 'OPEN')).join('')}</p>`, 'side-r dest');
 }
+
+const HOPS = [
+  ['origin', c.origin.host], ['field-work', c.field.host], ['certifications', c.certs.host], ['workproof', c.workproof.host],
+  ['tier-one', c.tierOne.host], ['builds', c.builds.host], ['labs', c.labs.host], ['destination', c.destination.host],
+];
 
 export function renderPage() {
   return `<a class="skip" href="#destination">Skip to contact links</a>
+<div class="preloader" aria-hidden="true"><p><span data-pre-line>resolving yaseen-selemani...</span> <span data-pre-n>0%</span></p><i class="pre-packet"></i></div>
+<div class="motion-ask" hidden><p data-ask-text>Your device asked for less motion.</p><button type="button" data-motion="on">Play the full experience</button></div>
 <div class="page">
-  <svg class="route" aria-hidden="true"><path class="track"/><path class="lit"/><g class="nodes"></g><circle class="packet" r="5"/></svg>
+  <svg class="route" aria-hidden="true"><path class="track"/><path class="lit-glow"/><path class="lit"/><g class="nodes"></g><circle class="cue" r="6"/><circle class="halo" r="18"/><circle class="packet" r="5"/></svg>
   ${hero()}
   <main>
     ${origin()}${field()}${certs()}${workproof()}${tierOne()}${builds()}${labs()}${destination()}
   </main>
 </div>
-<div class="hud" aria-hidden="true">
-  <span><span data-hud-hop>hop 0/8</span> · <span data-hud-t>0.0 s</span> · 0% loss</span>
-  <span class="up"><span class="dot"></span>link up</span>
+<div class="hud">
+  <span class="readout" aria-hidden="true"><span data-hud-hop>hop 0/8</span> · <span data-hud-t>0.0 s</span> · 0% loss</span>
+  <nav class="minimap" aria-label="Jump to a hop">${HOPS.map((h, i) => `<a href="#${h[0]}" data-name="${i + 1} ${h[1]}" aria-label="Hop ${i + 1}: ${h[1]}"><i></i></a>`).join('')}</nav>
+  <span class="up" aria-hidden="true"><span class="dot"></span>link up</span>
+  <button type="button" class="motion-toggle" data-motion="off">motion on</button>
 </div>`;
 }
 

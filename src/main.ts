@@ -3,6 +3,7 @@ import 'lenis/dist/lenis.css';
 import Lenis from 'lenis';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { decode, preloader, cursor, magnetic, numerals, tints, minimap } from './fx.ts';
 
 declare global {
   interface Window { __route?: boolean }
@@ -11,14 +12,43 @@ window.__route = true;
 gsap.registerPlugin(ScrollTrigger);
 
 const SVG = 'http://www.w3.org/2000/svg';
-const reduce = !document.documentElement.classList.contains('motion');
+const root = document.documentElement;
+const reduce = !root.classList.contains('motion');
 const $ = <T extends Element>(s: string, r: ParentNode = document) => r.querySelector(s) as T;
 
+/** Run one piece of the motion layer; if it throws, show everything rather than leave it hidden. */
+export function safe(name: string, fn: () => void) {
+  try { fn(); } catch (e) { root.classList.add('fx-failed'); console.error(`[${name}]`, e); }
+}
+
+// ---------- motion switch (works in both modes) ----------
+const setMotion = (v: 'on' | 'off') => {
+  let stored = true;
+  try { localStorage.setItem('motion', v); } catch { stored = false; }
+  const u = new URL(location.href);
+  u.searchParams.delete('motion');
+  if (v === 'on' && !stored) u.search = '?motion'; // storage blocked: fall back to the URL switch
+  location.replace(u.href);
+};
+document.querySelectorAll<HTMLButtonElement>('[data-motion]').forEach((b) =>
+  b.addEventListener('click', () => setMotion(b.dataset.motion as 'on' | 'off')));
+if (reduce) {
+  const ask = $<HTMLElement>('.motion-ask');
+  let pref: string | null = null;
+  try { pref = localStorage.getItem('motion'); } catch { /* ignore */ }
+  if (pref === 'off') $<HTMLElement>('[data-ask-text]').textContent = 'Motion is off.';
+  ask.hidden = false;
+}
+
+// ---------- the route ----------
 const page = $<HTMLElement>('.page');
 const svg = $<SVGSVGElement>('.route');
 const track = $<SVGPathElement>('.track', svg);
 const lit = $<SVGPathElement>('.lit', svg);
+const glow = $<SVGPathElement>('.lit-glow', svg);
 const packet = $<SVGCircleElement>('.packet', svg);
+const halo = $<SVGCircleElement>('.halo', svg);
+const cue = $<SVGCircleElement>('.cue', svg);
 const nodeLayer = $<SVGGElement>('.nodes', svg);
 const originEl = $<HTMLElement>('[data-origin]');
 const hops = [...document.querySelectorAll<HTMLElement>('.hop')];
@@ -26,7 +56,7 @@ const hudHop = $<HTMLElement>('[data-hud-hop]');
 const hudT = $<HTMLElement>('[data-hud-t]');
 const total = $<HTMLElement>('[data-total]');
 
-// Route geometry, rebuilt on every resize. Samples map path length <-> y so the tip can follow the scroll.
+// Samples map path length <-> y so the tip can follow the scroll.
 let len = 0;
 let xs = new Float32Array(0);
 let ys = new Float32Array(0);
@@ -34,10 +64,11 @@ let nodeLens: number[] = [];
 let nodes: SVGCircleElement[] = [];
 let y0 = 0;
 const reached = hops.map(() => false);
+let onReach: (i: number) => void = () => {};
 
 let startedAt = 0;
 let doneAt = 0;
-const elapsed = () => (startedAt ? ((doneAt || performance.now()) - startedAt) / 1000 : 0);
+export const elapsed = () => (startedAt ? ((doneAt || performance.now()) - startedAt) / 1000 : 0);
 
 function rel(el: Element) {
   const p = page.getBoundingClientRect();
@@ -63,9 +94,11 @@ function build() {
   const pts = [{ x: xL, y: y0 }];
   hops.forEach((h, i) => {
     const x = desktop && i % 2 ? xR : xL; // even hops ride the right lane on desktop
-    const top = rel(h).y;
-    const t = rel(h.querySelector('[data-node]')!);
-    const ny = t.y + t.h / 2;
+    // A pinned hop sits fixed inside its spacer; measure from the spacer so geometry ignores the pin state.
+    const box = h.parentElement?.classList.contains('pin-spacer') ? h.parentElement : h;
+    const top = rel(box).y;
+    const tr = h.querySelector('[data-node]')!.getBoundingClientRect();
+    const ny = top + (tr.top - h.getBoundingClientRect().top) + tr.height / 2;
     if (x !== cx) {
       // Cross lanes inside the section's empty top padding, never over text.
       const a = top + 32, b = ny - 56, k = (b - a) / 2;
@@ -75,10 +108,9 @@ function build() {
     d += ` L${x},${ny}`;
     pts.push({ x, y: ny });
   });
-  track.setAttribute('d', d);
-  lit.setAttribute('d', d);
+  for (const el of [track, lit, glow]) el.setAttribute('d', d);
   len = track.getTotalLength();
-  lit.style.strokeDasharray = `${len} ${len}`;
+  lit.style.strokeDasharray = glow.style.strokeDasharray = `${len} ${len}`;
 
   const n = Math.max(2, Math.ceil(len / 6));
   xs = new Float32Array(n + 1);
@@ -98,6 +130,8 @@ function build() {
     nodeLayer.append(c);
     return c;
   });
+  cue.setAttribute('cx', String(xL));
+  cue.setAttribute('cy', String(y0));
   nodeLens = pts.map((q) => lenAtY(q.y));
   update();
 }
@@ -134,13 +168,12 @@ function update() {
   // Tip starts on the hero prompt and eases into following 60% of the viewport over the first screen.
   const startV = y0 + pageTop;
   const tip = s - pageTop + startV + (0.6 * vh - startV) * Math.min(1, s / vh);
-  const atBottom = s >= document.documentElement.scrollHeight - vh - 2;
+  const atBottom = s >= root.scrollHeight - vh - 2;
   const l = atBottom ? len : lenAtY(tip);
 
-  lit.style.strokeDashoffset = String(len - l);
+  lit.style.strokeDashoffset = glow.style.strokeDashoffset = String(len - l);
   const q = pointAt(l);
-  packet.setAttribute('cx', String(q.x));
-  packet.setAttribute('cy', String(q.y));
+  for (const c of [packet, halo]) { c.setAttribute('cx', String(q.x)); c.setAttribute('cy', String(q.y)); }
 
   nodes[0]?.classList.add('on');
   hops.forEach((h, i) => {
@@ -148,11 +181,13 @@ function update() {
     reached[i] = true;
     nodes[i + 1].classList.add('on');
     h.querySelector('[data-t]')!.textContent = `${elapsed().toFixed(1)} s`;
+    onReach(i);
     if (i === hops.length - 1) {
       doneAt = performance.now();
       total.querySelector('b')!.textContent = elapsed().toFixed(1);
       total.hidden = false;
       tick();
+      dispatchEvent(new CustomEvent('trace-complete', { detail: elapsed() }));
     }
   });
 }
@@ -164,14 +199,15 @@ function tick() {
 
 new ResizeObserver(() => build()).observe(page);
 
+// ---------- the full experience ----------
 if (!reduce) {
-  const lenis = new Lenis({ anchors: true });
+  const lenis = new Lenis({ anchors: { duration: 1.6 } });
   lenis.on('scroll', ScrollTrigger.update);
   gsap.ticker.add((t) => lenis.raf(t * 1000));
   gsap.ticker.lagSmoothing(0);
 
   addEventListener('scroll', () => {
-    if (!startedAt && scrollY > 0) startedAt = performance.now();
+    if (!startedAt && scrollY > 0) { startedAt = performance.now(); root.classList.add('scrolled'); }
     update();
   }, { passive: true });
   setInterval(() => { if (startedAt && !doneAt) tick(); }, 100);
@@ -183,6 +219,23 @@ if (!reduce) {
     onEnter: (els) => els.forEach((e, i) => setTimeout(() => e.classList.add('in'), i * 70)),
   });
 
+  safe('cursor', cursor);
+  safe('magnetic', () => magnetic(document.querySelectorAll<HTMLElement>('.btn, .big')));
+  safe('numerals', () => numerals(lenis));
+  safe('tints', tints);
+  safe('minimap', () => { onReach = minimap(); });
+
+  // Headings: hero decodes after the preloader, hop titles as they arrive.
+  const pre = preloader(() => {
+    const r = svg.getBoundingClientRect();
+    return { x: r.left + Number(cue.getAttribute('cx')), y: r.top + y0 };
+  }).catch(() => root.classList.remove('preload'));
+  document.fonts.ready.then(() => safe('decode', () => {
+    decode($<HTMLElement>('h1'), (tl) => { pre.then(() => tl.play()); });
+    document.querySelectorAll<HTMLElement>('h2[data-decode]').forEach((h2) =>
+      decode(h2, (tl) => ScrollTrigger.create({ trigger: h2, start: 'top 85%', once: true, onEnter: () => tl.play() })));
+  }));
+
   // Demo video plays only while on screen.
   const video = document.querySelector<HTMLVideoElement>('video[data-autoplay]');
   if (video) {
@@ -190,6 +243,6 @@ if (!reduce) {
     new IntersectionObserver(([e]) => {
       if (e.isIntersecting) video.play().catch(() => (video.controls = true));
       else video.pause();
-    }, { threshold: 0.35 }).observe(video);
+    }, { threshold: 0.2 }).observe(video);
   }
 }
