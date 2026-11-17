@@ -107,7 +107,9 @@ export function field(lenis: Lenis) {
   function draw(now: number) {
     const dt = Math.min(64, now - last);
     last = now;
-    if (document.hidden || document.documentElement.classList.contains('field-rest')) return;
+    const rc = document.documentElement.classList;
+    // Only one heavy canvas at a time: the field rests behind the globe and the WorkProof stage.
+    if (document.hidden || rc.contains('field-rest') || rc.contains('globe-on')) return;
 
     // Budget: if frames average over 24 ms, halve the node count (once warmed up).
     frames++; slowSum += dt;
@@ -202,7 +204,7 @@ export function field(lenis: Lenis) {
     }
 
     // Hero -> hop 1: the camera dives into one node, which opens into the page.
-    if (dive > 0 && dive < 1) {
+    if (dive > 0 && dive < 1 && !rc.contains('has-globe')) {
       const e = dive * dive * dive;
       const R = 4 + e * Math.hypot(W, H);
       ctx.globalAlpha = state.intro * (1 - dive);

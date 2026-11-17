@@ -225,6 +225,16 @@ if (!reduce) {
   let net: ReturnType<typeof field> | undefined;
   safe('field', () => { net = field(lenis); });
 
+  // The globe is its own lazy chunk: only with motion on and working WebGL. The headline never waits for it.
+  const webgl = (() => {
+    try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; }
+  })();
+  if (webgl) {
+    import('./globe.ts')
+      .then((m) => m.globe({}))
+      .catch((e) => { root.classList.remove('has-globe', 'globe-on'); console.error('[globe]', e); });
+  }
+
   // Destination: the nodes spell YASEEN, the summary types out with the real time, the contact links land last.
   // Coming back to the destination replays the name; the copy dims during the hold so the letters read.
   safe('destination', () => {
