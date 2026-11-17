@@ -555,3 +555,13 @@ html:not(.motion) .route .lit-glow, html:not(.motion) .route .halo, html:not(.mo
   background: linear-gradient(180deg, rgba(255, 178, 36, 0) 0%, rgba(255, 178, 36, 0.07) 80%, rgba(255, 178, 36, 0.22) 99%);
   border-bottom: 2px solid var(--amber); box-shadow: 0 2px 18px rgba(255, 178, 36, 0.7);
 }
+@media (max-width: 600px) {
+  /* Two rows on phones: readout and the two toggles, then the hop mini-map. */
+  .hud { display: none; grid-template-columns: 1fr auto auto; align-items: center; gap: 2px 4px; }
+  .motion .hud { display: grid; }
+  .hud .readout { grid-column: 1; grid-row: 1; white-space: nowrap; }
+  .hud [data-sound] { grid-column: 2; grid-row: 1; }
+  .hud [data-motion] { grid-column: 3; grid-row: 1; }
+  .hud .minimap { grid-column: 1 / -1; grid-row: 2; }
+  .motion-toggle { font-size: 11px; padding: 4px; }
+}
