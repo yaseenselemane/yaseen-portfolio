@@ -6,6 +6,7 @@ import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
 import { Draggable } from 'gsap/Draggable';
 import { ScrambleTextPlugin } from 'gsap/ScrambleTextPlugin';
+import { sound } from './sound.ts';
 
 gsap.registerPlugin(ScrollTrigger, TextPlugin, DrawSVGPlugin, MotionPathPlugin, Draggable, ScrambleTextPlugin);
 const root = document.documentElement;
@@ -189,6 +190,7 @@ export function checkpoint() {
         .fromTo(pair('.scan'), { xPercent: -100, autoAlpha: 1 }, { xPercent: 420, duration: 0.35 }, '<0.3')
         .set(pair('.scan'), { autoAlpha: 0 })
         .fromTo(pair('.stamp'), { scale: 2.8, rotate: -24, autoAlpha: 0 }, { scale: 1, rotate: -8, autoAlpha: 1, duration: 0.12, ease: 'expo.in' })
+        .call(() => sound.clunk())
         .to(pair('.permit'), { autoAlpha: 1, duration: 0.05 }, '<')
         .fromTo(li, { backgroundColor: 'rgba(61, 220, 151, 0.28)' }, { backgroundColor: 'rgba(61, 220, 151, 0)', duration: 0.3 })
         .fromTo([gate, half], { x: -10 }, { x: 0, duration: 0.25, ease: 'elastic.out(1, 0.25)' }, '<');
@@ -276,7 +278,7 @@ export function patchCable() {
       gsap.timeline()
         .to(ports, { backgroundColor: '#3ddc97', boxShadow: '0 0 10px rgba(61,220,151,0.9)', duration: 0.12, stagger: 0.07 })
         .to(status, { text: 'link up · ready to play', duration: 0.6, ease: 'none' }, 0.1)
-        .add(() => { play.classList.add('lit'); rack.classList.add('up'); });
+        .add(() => { play.classList.add('lit'); rack.classList.add('up'); sound.chirp(); });
       plug.setAttribute('aria-label', 'Cable patched. Link up.');
     });
   };

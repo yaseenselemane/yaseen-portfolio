@@ -188,6 +188,7 @@ export function renderPage() {
   <span class="readout" aria-hidden="true"><span data-hud-hop>hop 0/8</span> · <span data-hud-t>0.0 s</span> · 0% loss</span>
   <nav class="minimap" aria-label="Jump to a hop">${HOPS.map((h, i) => `<a href="#${h[0]}" data-name="${i + 1} ${h[1]}" aria-label="Hop ${i + 1}: ${h[1]}"><i></i></a>`).join('')}</nav>
   <span class="up" aria-hidden="true"><span class="dot"></span>link up</span>
+  <button type="button" class="motion-toggle" data-sound aria-pressed="false">sound off</button>
   <button type="button" class="motion-toggle" data-motion="off" aria-pressed="true" aria-label="Motion is on. Turn it off">motion on</button>
 </div>`;
 }

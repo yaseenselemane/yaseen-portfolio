@@ -6,6 +6,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { TextPlugin } from 'gsap/TextPlugin';
 import { decode, preloader, cursor, magnetic, numerals, tints, minimap, fine } from './fx.ts';
 import { field } from './field.ts';
+import { sound } from './sound.ts';
 import { workproof, checkpoint, devland, patchCable, buildRows, labsCapture } from './scenes.ts';
 
 declare global {
@@ -206,7 +207,7 @@ new ResizeObserver(() => build()).observe(page);
 if (!reduce) {
   const lenis = new Lenis({ anchors: { duration: 1.6 } });
   lenis.on('scroll', ScrollTrigger.update);
-  gsap.ticker.add((t) => lenis.raf(t * 1000));
+  gsap.ticker.add((t) => { lenis.raf(t * 1000); sound.speed(lenis.velocity); });
   gsap.ticker.lagSmoothing(0);
 
   addEventListener('scroll', () => {
@@ -231,7 +232,7 @@ if (!reduce) {
   })();
   if (webgl) {
     import('./globe.ts')
-      .then((m) => m.globe({}))
+      .then((m) => m.globe({ onDive: () => sound.whoosh(0.45) }))
       .catch((e) => { root.classList.remove('has-globe', 'globe-on'); console.error('[globe]', e); });
   }
 
@@ -244,6 +245,7 @@ if (!reduce) {
     let done = false;
     addEventListener('trace-complete', ((e: CustomEvent<number>) => {
       const text = `Trace complete. 8 hops, ${e.detail.toFixed(1)} s, 0% packet loss.`;
+      sound.swell();
       const tl = net?.finale() ?? gsap.timeline().addLabel('hold');
       tl.set(summary, { opacity: 1, text: '' }, 1.2)
         .to(summary, { text, duration: text.length * 0.035, ease: 'none' }, 1.2)
@@ -253,7 +255,7 @@ if (!reduce) {
     }) as EventListener, { once: true });
     ScrollTrigger.create({
       trigger: '#destination', start: 'top 40%',
-      onEnter: () => { if (done && net) net.finale().to([summary, reply, contact], { opacity: 0.12, duration: 0.6 }, 0).to([summary, reply, contact], { opacity: 1, duration: 0.8 }, 'hold+=2.4'); },
+      onEnter: () => { if (!done || !net) return; sound.swell(); net.finale().to([summary, reply, contact], { opacity: 0.12, duration: 0.6 }, 0).to([summary, reply, contact], { opacity: 1, duration: 0.8 }, 'hold+=2.4'); },
       onLeaveBack: () => net?.reset(),
     });
   });
@@ -264,6 +266,16 @@ if (!reduce) {
   safe('patch', patchCable);
   safe('builds', () => buildRows(fine));
   safe('labs', () => labsCapture(() => innerWidth >= 900));
+  // Sound toggle: off by default, remembered. The click itself is the gesture that lets audio start.
+  safe('sound', () => {
+    const b = $<HTMLButtonElement>('[data-sound]');
+    let stored = false;
+    try { stored = localStorage.getItem('sound') === 'on'; } catch { /* storage blocked */ }
+    const show = (v: boolean) => { b.textContent = v ? 'sound on' : 'sound off'; b.setAttribute('aria-pressed', String(v)); };
+    show(stored);
+    b.addEventListener('click', () => { sound.set(b.getAttribute('aria-pressed') !== 'true'); show(sound.on); });
+  });
+
   safe('cursor', cursor);
   safe('magnetic', () => magnetic(document.querySelectorAll<HTMLElement>('.btn, .big')));
   safe('numerals', () => numerals(lenis));
@@ -276,6 +288,8 @@ if (!reduce) {
     document.body.append(wipe);
     onReach = (i) => {
       mark(i);
+      sound.tick();
+      sound.whoosh(0.12);
       gsap.fromTo(wipe, { yPercent: -100, autoAlpha: 1 }, { yPercent: 100 + 100 * (innerHeight / wipe.offsetHeight), duration: 0.55, ease: 'power2.inOut', overwrite: true, onComplete: () => gsap.set(wipe, { autoAlpha: 0 }) });
       dispatchEvent(new CustomEvent('hop-reached', { detail: i }));
     };
