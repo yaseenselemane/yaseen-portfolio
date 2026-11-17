@@ -13,6 +13,16 @@ const MUTED = '138,147,166';
 const shade = (rgb: string) => Array.from({ length: 21 }, (_, i) => `rgba(${rgb},${i / 20})`);
 const AMBERS = shade(AMBER), GREYS = shade(MUTED);
 const pick = (set: string[], a: number) => set[Math.max(0, Math.min(20, Math.round(a * 20)))];
+// Pre-rendered glow sprite for packets and near nodes (cheaper than shadowBlur or extra arc fills).
+const GLOW = (() => {
+  const c = document.createElement('canvas');
+  c.width = c.height = 32;
+  const g = c.getContext('2d')!;
+  const r = g.createRadialGradient(16, 16, 0, 16, 16, 16);
+  r.addColorStop(0, 'rgba(255,214,140,0.9)'); r.addColorStop(0.3, 'rgba(255,178,36,0.35)'); r.addColorStop(1, 'rgba(255,178,36,0)');
+  g.fillStyle = r; g.fillRect(0, 0, 32, 32);
+  return c;
+})();
 
 export function field(lenis: Lenis) {
   const cv = document.createElement('canvas');
@@ -99,8 +109,8 @@ export function field(lenis: Lenis) {
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     cv.style.width = `${W}px`; cv.style.height = `${H}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    // About 90 nodes on a phone, 260 on a desktop.
-    const n = Math.round(Math.min(260, Math.max(90, ((W * H) / (1440 * 900)) * 260)));
+    // About 130 nodes on a phone, 330 on a desktop.
+    const n = Math.round(Math.min(330, Math.max(130, ((W * H) / (1440 * 900)) * 330)));
     if (n !== count) seed(n); else assignTargets();
   }
 
@@ -144,18 +154,20 @@ export function field(lenis: Lenis) {
       n.on = dx * dx + dy * dy < 150 * 150;
     }
 
-    // Links, faded by depth and dissolved while the name forms.
-    const linkA = 0.22 * (1 - m);
-    if (linkA > 0.01) {
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = `rgba(${MUTED},${linkA})`;
-      ctx.beginPath();
-      for (const [a, b] of links) {
-        const p = nodes[a], q = nodes[b];
-        if (Math.abs(p.sz - q.sz) > 0.25) continue; // one end wrapped to the far side
-        ctx.moveTo(p.sx, p.sy); ctx.lineTo(q.sx, q.sy);
+    // Links in two depth bands (far: thin and dim, near: brighter), dissolved while the name forms.
+    if (m < 0.99) {
+      for (const near of [false, true]) {
+        ctx.lineWidth = near ? 1.2 : 0.7;
+        ctx.strokeStyle = `rgba(${MUTED},${(near ? 0.34 : 0.12) * (1 - m)})`;
+        ctx.beginPath();
+        for (const [a, b] of links) {
+          const p = nodes[a], q = nodes[b];
+          if (Math.abs(p.sz - q.sz) > 0.25) continue; // one end wrapped to the far side
+          if ((p.sz + q.sz > 0.9) !== near) continue;
+          ctx.moveTo(p.sx, p.sy); ctx.lineTo(q.sx, q.sy);
+        }
+        ctx.stroke();
       }
-      ctx.stroke();
     }
 
     if (m > 0.6) {
@@ -169,22 +181,30 @@ export function field(lenis: Lenis) {
     for (const n of nodes) if (n.on) { ctx.moveTo(n.sx, n.sy); ctx.lineTo(pointer.x, pointer.y); }
     ctx.stroke();
 
-    // Nodes; with warp they stretch into streaks toward the viewer.
+    // Nodes; with warp they stretch into streaks toward the viewer (batched in three depth bands, one stroke each).
     const streak = warp * 0.9 * (1 - m);
-    for (const n of nodes) {
-      const near = n.sz;
-      const r = (0.6 + near * 2.2) * (1 - m) + m * 3.2;
-      const a = n.on || m > 0.5 ? 0.95 : 0.25 + near * 0.6;
-      const col = pick(n.on || m > 0.5 ? AMBERS : GREYS, a);
-      if (streak > 1) {
-        const ux = n.sx - cx, uy = n.sy - cy;
-        const k = (streak * near * 0.02);
-        ctx.strokeStyle = col;
-        ctx.lineWidth = r;
-        ctx.beginPath(); ctx.moveTo(n.sx, n.sy); ctx.lineTo(n.sx + ux * k, n.sy + uy * k); ctx.stroke();
-      } else {
-        ctx.fillStyle = col;
+    if (streak > 1) {
+      for (let band = 0; band < 3; band++) {
+        const near = 0.3 + band * 0.25;
+        ctx.lineWidth = 0.4 + near * near * 5;
+        ctx.strokeStyle = pick(GREYS, 0.1 + near ** 1.5 * 1.1);
+        ctx.beginPath();
+        for (const n of nodes) {
+          if (Math.min(2, Math.floor((n.sz - 0.19) / 0.22)) !== band) continue;
+          const k = streak * n.sz * 0.02;
+          ctx.moveTo(n.sx, n.sy); ctx.lineTo(n.sx + (n.sx - cx) * k, n.sy + (n.sy - cy) * k);
+        }
+        ctx.stroke();
+      }
+    } else {
+      for (const n of nodes) {
+        const near = n.sz;
+        // Real depth: near nodes are larger and brighter, far ones small and dim.
+        const r = (0.4 + near * near * 5) * (1 - m) + m * 3.2;
+        const a = n.on || m > 0.5 ? 0.95 : 0.1 + near ** 1.5 * 1.1;
+        ctx.fillStyle = pick(n.on || m > 0.5 ? AMBERS : GREYS, a);
         ctx.fillRect(n.sx - r / 2, n.sy - r / 2, r, r);
+        if (near > 0.7 && m < 0.5) ctx.drawImage(GLOW, n.sx - r * 3, n.sy - r * 3, r * 6, r * 6);
       }
     }
 
@@ -196,10 +216,8 @@ export function field(lenis: Lenis) {
         const a = nodes[p.a], b = nodes[p.b];
         if (!a || !b || Math.abs(a.sz - b.sz) > 0.25) continue;
         const x = a.sx + (b.sx - a.sx) * p.t, y = a.sy + (b.sy - a.sy) * p.t;
-        ctx.fillStyle = `rgba(${AMBER},0.18)`;
-        ctx.beginPath(); ctx.arc(x, y, 6, 0, 7); ctx.fill();
-        ctx.fillStyle = `rgba(${AMBER},1)`;
-        ctx.beginPath(); ctx.arc(x, y, 1.8, 0, 7); ctx.fill();
+        const g = 10 + a.sz * 16;
+        ctx.drawImage(GLOW, x - g / 2, y - g / 2, g, g);
       }
     }
 

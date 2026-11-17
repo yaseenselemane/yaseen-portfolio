@@ -188,6 +188,9 @@ export async function globe(opts: { onDive?: () => void }) {
     const on = p < 1 && !document.hidden;
     root.classList.toggle('globe-on', p < 1);
     if (!on) {
+      // A fast scroll can jump straight past the dive: hide whatever frame was last drawn.
+      canvas.style.opacity = '0';
+      flash.style.opacity = '0';
       if (!dived && p >= 1) { dived = true; opts.onDive?.(); }
       return; // off screen: no rendering at all
     }

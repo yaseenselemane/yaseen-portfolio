@@ -548,3 +548,10 @@ html:not(.motion) .route .lit-glow, html:not(.motion) .route .halo, html:not(.mo
   position: fixed; inset: 0; z-index: 5; pointer-events: none; opacity: 0;
   background: radial-gradient(circle at 50% 50%, rgba(255, 226, 170, 0.95), rgba(255, 178, 36, 0.55) 28%, rgba(11, 14, 20, 0) 72%);
 }
+
+/* hop arrival: an amber scan line sweeps the screen */
+.wipe {
+  position: fixed; left: 0; right: 0; top: 0; height: 22vh; z-index: 6; pointer-events: none; visibility: hidden;
+  background: linear-gradient(180deg, rgba(255, 178, 36, 0) 0%, rgba(255, 178, 36, 0.07) 80%, rgba(255, 178, 36, 0.22) 99%);
+  border-bottom: 2px solid var(--amber); box-shadow: 0 2px 18px rgba(255, 178, 36, 0.7);
+}

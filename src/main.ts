@@ -268,7 +268,18 @@ if (!reduce) {
   safe('magnetic', () => magnetic(document.querySelectorAll<HTMLElement>('.btn, .big')));
   safe('numerals', () => numerals(lenis));
   safe('tints', tints);
-  safe('minimap', () => { onReach = minimap(); });
+  safe('minimap', () => {
+    const mark = minimap();
+    // Each arrival sweeps an amber scan line down the screen (under 600 ms, never blocks scroll).
+    const wipe = Object.assign(document.createElement('div'), { className: 'wipe' });
+    wipe.setAttribute('aria-hidden', 'true');
+    document.body.append(wipe);
+    onReach = (i) => {
+      mark(i);
+      gsap.fromTo(wipe, { yPercent: -100, autoAlpha: 1 }, { yPercent: 100 + 100 * (innerHeight / wipe.offsetHeight), duration: 0.55, ease: 'power2.inOut', overwrite: true, onComplete: () => gsap.set(wipe, { autoAlpha: 0 }) });
+      dispatchEvent(new CustomEvent('hop-reached', { detail: i }));
+    };
+  });
 
   // Headings: hero decodes after the preloader, hop titles as they arrive.
   const pre = preloader(() => {
