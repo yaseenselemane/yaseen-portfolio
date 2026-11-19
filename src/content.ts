@@ -5,21 +5,21 @@ export type Link = { label: string; href: string };
 export const site = {
   title: 'Yaseen Selemani · Traceroute',
   description:
-    'Yaseen Selemani: final-year BSc IT, networking and cybersecurity, Soweto, Johannesburg. Certified network engineer building real things. Open to graduate and internship roles.',
+    'Yaseen Selemani: final-year BSc IT, networking and cybersecurity, Soweto, Johannesburg. Azure Network Engineer Associate (AZ-700). Open to graduate and internship roles as a network engineer or cybersecurity specialist.',
 };
 
 export const hero = {
   prompt: '$ traceroute yaseen-selemani',
   headline: 'I build networks. Then I build what runs on them.',
   sub: 'Yaseen Selemani. Final-year BSc IT, networking and cybersecurity. Soweto, Johannesburg.',
-  status: 'Open to graduate and internship roles',
+  status: 'Open to graduate and internship roles: network engineer, cybersecurity specialist',
   // The recruiter's 30-second read: only facts already stated elsewhere on the page.
   summary: [
     ['who', 'Final-year BSc IT, networking and cybersecurity, Richfield'],
     ['certs', 'Azure Network Engineer Associate (AZ‑700) · Cisco Network Security'],
     ['award', 'WorkProof: 2nd place, Credify System Thinking Challenge 2026'],
     ['field', 'IT Technician (WIL), Devland Cash & Carry: IP cameras, Ubiquiti, VLANs'],
-    ['status', 'Open to graduate and internship roles · Soweto, Johannesburg'],
+    ['target', 'Network engineer or cybersecurity specialist · graduate / internship · Soweto, Johannesburg'],
   ],
 };
 
@@ -127,7 +127,7 @@ export const labs = {
 export const destination = {
   host: 'yaseen-selemani',
   label: 'Destination reached',
-  reply: 'Reply from yaseen: open to graduate and internship roles in networking, security and cloud.',
+  reply: 'Reply from yaseen: open to graduate and internship roles as a network engineer or cybersecurity specialist.',
   links: [
     { label: 'LinkedIn', href: 'https://www.linkedin.com/in/yaseen-selemane-b9201734a' },
     { label: 'GitHub', href: 'https://github.com/yaseenselemane' },
