@@ -13,7 +13,17 @@ export const hero = {
   headline: 'I build networks. Then I build what runs on them.',
   sub: 'Yaseen Selemani. Final-year BSc IT, networking and cybersecurity. Soweto, Johannesburg.',
   status: 'Open to graduate and internship roles',
+  // The recruiter's 30-second read: only facts already stated elsewhere on the page.
+  summary: [
+    ['who', 'Final-year BSc IT, networking and cybersecurity, Richfield'],
+    ['certs', 'Azure Network Engineer Associate (AZ‑700) · Cisco Network Security'],
+    ['award', 'WorkProof: 2nd place, Credify System Thinking Challenge 2026'],
+    ['field', 'IT Technician (WIL), Devland Cash & Carry: IP cameras, Ubiquiti, VLANs'],
+    ['status', 'Open to graduate and internship roles · Soweto, Johannesburg'],
+  ],
 };
+
+export const cv = { label: 'Download CV (PDF)', href: '/Yaseen_Selemani_CV.pdf' };
 
 export const origin = {
   host: 'soweto.jhb.za',

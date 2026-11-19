@@ -7,6 +7,9 @@ const esc = (s: string) =>
 const ext = (l: c.Link, cls = '', cursor = '') =>
   `<a class="${cls}" href="${esc(l.href)}" target="_blank" rel="noopener"${cursor ? ` data-cursor="${cursor}"` : ''}>${esc(l.label)}<span class="arrow" aria-hidden="true">↗</span></a>`;
 
+const cvButton = () =>
+  `<a class="btn cv" href="${c.cv.href}" download data-cursor="CV">${esc(c.cv.label)}<span class="arrow" aria-hidden="true">↓</span></a>`;
+
 const trace = (n: number, host: string) =>
   `<div class="trace" data-node><span class="n">${n}</span><span class="host">${esc(host)}</span><span class="lead" aria-hidden="true"></span><span class="t" data-t></span></div>`;
 
@@ -32,6 +35,11 @@ function hero() {
     <h1 data-decode>${esc(h.headline)}</h1>
     <p class="sub" data-reveal>${esc(h.sub)}</p>
     <p class="status" data-reveal><span class="dot" aria-hidden="true"></span>${esc(h.status)}</p>
+    <section class="tldr" aria-labelledby="tldr-h" data-reveal>
+      <h2 id="tldr-h" class="tldr-h">// in 30 seconds</h2>
+      <dl>${h.summary.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
+      <p class="tldr-cta">${cvButton()}</p>
+    </section>
   </div>
 </header>`;
 }
@@ -165,7 +173,7 @@ function destination() {
   return hop(8, 'destination', d.host, '', d.label, `
     <p class="summary" data-dest>Trace complete. 8 hops,<span data-total hidden> <b></b> s,</span> 0% packet loss.</p>
     <p class="reply" data-dest>${esc(d.reply)}</p>
-    <p class="contact" data-dest>${d.links.map((l) => ext(l, 'big', 'OPEN')).join('')}</p>`, 'side-r dest');
+    <p class="contact" data-dest>${d.links.map((l) => ext(l, 'big', 'OPEN')).join('')}${cvButton()}</p>`, 'side-r dest');
 }
 
 const HOPS = [
