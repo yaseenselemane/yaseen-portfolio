@@ -304,7 +304,7 @@ if (!reduce) {
   document.fonts.ready.then(() => safe('decode', () => {
     decode($<HTMLElement>('h1'), (tl) => { pre.then(() => tl.play()); });
     document.querySelectorAll<HTMLElement>('h2[data-decode]').forEach((h2) =>
-      decode(h2, (tl) => ScrollTrigger.create({ trigger: h2, start: 'top 85%', once: true, onEnter: () => tl.play() })));
+      decode(h2, (tl) => ScrollTrigger.create({ trigger: h2, start: 'top 96%', once: true, onEnter: () => tl.play() })));
   }));
 
   // Demo video plays only while on screen.

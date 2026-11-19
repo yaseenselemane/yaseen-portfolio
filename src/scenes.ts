@@ -43,7 +43,7 @@ export function workproof() {
   stage.append(screen, mask, dim, slam, reel);
   award.after(stage);
   // Open on the product itself (the first seconds of the demo are statistics slides).
-  video.addEventListener('loadedmetadata', () => { if (video.currentTime < 1) video.currentTime = 36; }, { once: true });
+  video.addEventListener('play', () => { if (video.currentTime < 1) video.currentTime = 36; });
   sec.classList.add('wp-staged');
 
   const poster = Object.assign(new Image(), { src: video.poster });
@@ -88,6 +88,10 @@ export function workproof() {
     ctx.globalAlpha = view.fade;
     try { ctx.drawImage(src, (W - sw * k) / 2, (H - sh * k) / 2, sw * k, sh * k); } catch { /* frame not ready */ }
     ctx.globalAlpha = 1;
+    // Lift dark frames inside the letters so WORKPROOF never reads as broken shapes.
+    ctx.globalCompositeOperation = 'source-atop'; // only where the letters are
+    ctx.fillStyle = 'rgba(255,255,255,0.22)';
+    ctx.fillRect(0, 0, W, H);
     ctx.globalCompositeOperation = 'destination-over';
     ctx.fillStyle = '#0b0e14';
     ctx.fillRect(0, 0, W, H);
@@ -158,6 +162,10 @@ export function checkpoint() {
   head.insertAdjacentHTML('beforeend', ' <span class="gate-status" aria-hidden="true">· evaluating</span>');
 
   // The right half of the gate is a copy that only appears when the gate splits.
+  const rules = gate.querySelectorAll('.acl li').length;
+  const pass = el('div', 'gate-pass', `<b>ACCESS GRANTED</b><span>${rules} of ${rules} rules matched · permit</span>`);
+  pass.setAttribute('aria-hidden', 'true');
+  sec.append(pass);
   const half = gate.cloneNode(true) as HTMLElement;
   half.classList.add('gate-half');
   half.setAttribute('aria-hidden', 'true');
@@ -200,8 +208,9 @@ export function checkpoint() {
       .set(half, { autoAlpha: 1, clipPath: 'inset(0 0 0 50%)' })
       .set(gate, { clipPath: 'inset(0 50% 0 0)' })
       .to(gate, { xPercent: -55, autoAlpha: 0, duration: 0.8, ease: 'power2.in' })
-      .to(half, { xPercent: 55, autoAlpha: 0, duration: 0.8, ease: 'power2.in' }, '<');
-    return () => gsap.set([gate, half, ...both('.acl li, .permit, .stamp, .scan, .cert .name')], { clearProps: 'all' });
+      .to(half, { xPercent: 55, autoAlpha: 0, duration: 0.8, ease: 'power2.in' }, '<')
+      .fromTo(pass, { autoAlpha: 0, scale: 0.85 }, { autoAlpha: 1, scale: 1, duration: 0.5, ease: 'expo.out' }, '<0.25');
+    return () => gsap.set([gate, half, pass, ...both('.acl li, .permit, .stamp, .scan, .cert .name')], { clearProps: 'all' });
   });
 }
 
@@ -306,7 +315,7 @@ export function patchCable() {
 export function buildRows(fine: boolean) {
   const rows = [...document.querySelectorAll<HTMLElement>('.rows li')];
   if (!fine) {
-    rows.forEach((li) => ScrollTrigger.create({ trigger: li, start: 'top 58%', end: 'bottom 42%', toggleClass: 'active' }));
+    rows.forEach((li) => ScrollTrigger.create({ trigger: li, start: 'top 50%', end: 'bottom 50%', toggleClass: 'active' }));
     return;
   }
   const panel = el('div', 'bp-panel');

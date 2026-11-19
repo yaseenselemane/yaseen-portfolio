@@ -23,8 +23,8 @@ export function decode(el: HTMLElement, onReady?: (tl: gsap.core.Timeline) => vo
       const tl = gsap.timeline({ paused: true });
       self.lines.forEach((ln, i) => {
         const text = ln.textContent ?? '';
-        tl.from(ln, { yPercent: 110, duration: 0.9, ease: 'expo.out' }, i * 0.09)
-          .to(ln, { duration: 1.2, scrambleText: { text, chars: HEX, revealDelay: 0.25, speed: 0.7 }, ease: 'none' }, i * 0.09);
+        tl.from(ln, { yPercent: 110, duration: 0.7, ease: 'expo.out' }, i * 0.07)
+          .to(ln, { duration: 0.75, scrambleText: { text, chars: HEX, revealDelay: 0.15, speed: 0.9 }, ease: 'none' }, i * 0.07);
       });
       el.style.visibility = 'visible';
       onReady?.(tl);
