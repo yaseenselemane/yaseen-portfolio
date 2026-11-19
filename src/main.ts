@@ -48,8 +48,17 @@ if (reduce) {
 const page = $<HTMLElement>('.page');
 const svg = $<SVGSVGElement>('.route');
 const track = $<SVGPathElement>('.track', svg);
-const lit = $<SVGPathElement>('.lit', svg);
-const glow = $<SVGPathElement>('.lit-glow', svg);
+const litLayer = $<SVGGElement>('.lit-chunks', svg);
+// The lit route is one short path per hop, so a scroll frame only repaints the piece under the packet,
+// not a path as tall as the whole page.
+// With motion on, the route is drawn on a screen-sized canvas instead: each scroll frame paints only the
+// visible pixels. A page-tall SVG repainted every frame was the main cause of dropped frames on desktop.
+const rcv = reduce ? null : Object.assign(document.createElement('canvas'), { className: 'route route-canvas' });
+const rctx = rcv?.getContext('2d') ?? null;
+if (rcv) { rcv.setAttribute('aria-hidden', 'true'); page.prepend(rcv); }
+let trackPath: Path2D | null = null;
+let routePts: { x: number; y: number }[] = [];
+let chunks: { lit: SVGPathElement; glow: SVGPathElement; start: number; len: number; off: string }[] = [];
 const packet = $<SVGCircleElement>('.packet', svg);
 const halo = $<SVGCircleElement>('.halo', svg);
 const cue = $<SVGCircleElement>('.cue', svg);
@@ -94,6 +103,8 @@ function build() {
   y0 = o.y + o.h / 2;
 
   let d = `M${xL},${y0}`;
+  let cd = d;
+  const cds: string[] = [];
   let cx = xL;
   const pts = [{ x: xL, y: y0 }];
   hops.forEach((h, i) => {
@@ -106,17 +117,38 @@ function build() {
     if (x !== cx) {
       // Cross lanes inside the section's empty top padding, never over text.
       const a = top + 32, b = ny - 56, k = (b - a) / 2;
-      d += ` L${cx},${a} C${cx},${a + k} ${x},${b - k} ${x},${b}`;
+      const seg = ` L${cx},${a} C${cx},${a + k} ${x},${b - k} ${x},${b}`;
+      d += seg; cd += seg;
       cx = x;
     }
     d += ` L${x},${ny}`;
+    cds.push(cd + ` L${x},${ny}`);
+    cd = `M${x},${ny}`;
     pts.push({ x, y: ny });
   });
-  for (const el of [track, lit, glow]) el.setAttribute('d', d);
+  track.setAttribute('d', d);
+  trackPath = new Path2D(d);
+  routePts = pts;
   len = track.getTotalLength();
-  lit.style.strokeDasharray = glow.style.strokeDasharray = `${len} ${len}`;
+  litLayer.replaceChildren();
+  let start = 0;
+  chunks = cds.map((cd) => {
+    const [glow, lit] = ['lit-glow', 'lit'].map((cls) => {
+      const p = document.createElementNS(SVG, 'path');
+      p.setAttribute('class', cls);
+      p.setAttribute('d', cd);
+      litLayer.append(p);
+      return p;
+    });
+    const L = lit.getTotalLength();
+    lit.style.strokeDasharray = glow.style.strokeDasharray = `${L} ${L}`;
+    lit.style.strokeDashoffset = glow.style.strokeDashoffset = String(L);
+    const c = { lit, glow, start, len: L, off: String(L) };
+    start += L;
+    return c;
+  });
 
-  const n = Math.max(2, Math.ceil(len / 6));
+  const n = Math.max(2, Math.ceil(len / 24)); // 24 px samples: linear interpolation between them is exact on straight runs
   xs = new Float32Array(n + 1);
   ys = new Float32Array(n + 1);
   for (let i = 0; i <= n; i++) {
@@ -163,7 +195,7 @@ function pointAt(l: number) {
 function update() {
   if (!len) return;
   if (reduce) {
-    lit.style.strokeDashoffset = '0';
+    for (const c of chunks) c.lit.style.strokeDashoffset = '0';
     nodes.forEach((c) => c.classList.add('on'));
     return;
   }
@@ -175,9 +207,13 @@ function update() {
   const atBottom = s >= root.scrollHeight - vh - 2;
   const l = atBottom ? len : lenAtY(tip);
 
-  lit.style.strokeDashoffset = glow.style.strokeDashoffset = String(len - l);
+  for (const c of chunks) {
+    const off = String(Math.round(Math.min(c.len, Math.max(0, c.start + c.len - l))));
+    if (off !== c.off) { c.off = off; c.lit.style.strokeDashoffset = c.glow.style.strokeDashoffset = off; }
+  }
   const q = pointAt(l);
-  for (const c of [packet, halo]) { c.setAttribute('cx', String(q.x)); c.setAttribute('cy', String(q.y)); }
+  if (rctx) drawRoute(l, q);
+  else for (const c of [packet, halo]) { c.setAttribute('cx', String(q.x)); c.setAttribute('cy', String(q.y)); }
 
   nodes[0]?.classList.add('on');
   hops.forEach((h, i) => {
@@ -196,16 +232,62 @@ function update() {
   });
 }
 
+function drawRoute(l: number, q: { x: number; y: number }) {
+  if (!rcv || !rctx || !trackPath) return;
+  const W = innerWidth, H = innerHeight, dpr = Math.min(2, devicePixelRatio || 1);
+  if (rcv.width !== Math.round(W * dpr) || rcv.height !== Math.round(H * dpr)) {
+    rcv.width = Math.round(W * dpr); rcv.height = Math.round(H * dpr);
+  }
+  const r = page.getBoundingClientRect();
+  const c = rctx;
+  c.setTransform(dpr, 0, 0, dpr, r.left * dpr, r.top * dpr); // page coordinates -> screen
+  c.clearRect(-r.left, -r.top, W, H);
+  c.lineCap = 'round'; c.lineJoin = 'round';
+  c.lineWidth = 1.5; c.strokeStyle = '#232a38';
+  c.stroke(trackPath);
+  if (l > 0) {
+    c.setLineDash([l, len + 10]);
+    c.lineWidth = 8; c.strokeStyle = 'rgba(255,178,36,0.16)'; c.stroke(trackPath);
+    c.lineWidth = 1.5; c.strokeStyle = '#ffb224'; c.stroke(trackPath);
+    c.setLineDash([]);
+  }
+  routePts.forEach((p, i) => {
+    const on = nodes[i]?.classList.contains('on');
+    if (on) { c.fillStyle = 'rgba(255,178,36,0.22)'; c.beginPath(); c.arc(p.x, p.y, 13, 0, 7); c.fill(); }
+    c.beginPath(); c.arc(p.x, p.y, i ? 6 : 4, 0, 7);
+    c.fillStyle = on ? '#ffb224' : '#0b0e14'; c.fill();
+    c.lineWidth = 1.5; c.strokeStyle = on ? '#ffb224' : '#8a93a6'; c.stroke();
+  });
+  if (!startedAt) {
+    // Scroll cue: a ring pulsing out of the origin until the first scroll.
+    const k = (performance.now() % 1600) / 1600;
+    c.globalAlpha = 1 - k; c.lineWidth = 1.5; c.strokeStyle = '#ffb224';
+    c.beginPath(); c.arc(routePts[0].x, routePts[0].y, 6 * (0.6 + 2.6 * k), 0, 7); c.stroke();
+    c.globalAlpha = 1;
+  }
+  c.fillStyle = 'rgba(255,178,36,0.18)'; c.beginPath(); c.arc(q.x, q.y, 18, 0, 7); c.fill();
+  c.fillStyle = '#ffb224'; c.beginPath(); c.arc(q.x, q.y, 5, 0, 7); c.fill();
+}
+
 function tick() {
   hudHop.textContent = `hop ${reached.filter(Boolean).length}/${hops.length}`;
   hudT.textContent = `${elapsed().toFixed(1)} s`;
 }
 
-new ResizeObserver(() => build()).observe(page);
+// Rebuild once per burst of size changes, and only when the size really changed: a rebuild samples the whole route.
+let lastSize = '', buildTimer = 0;
+new ResizeObserver(([e]) => {
+  const size = `${Math.round(e.contentRect.width)}x${Math.round(e.contentRect.height)}`;
+  if (size === lastSize) return;
+  const first = !lastSize;
+  lastSize = size;
+  clearTimeout(buildTimer);
+  if (first) build(); else buildTimer = window.setTimeout(build, 180);
+}).observe(page);
 
 // ---------- the full experience ----------
 if (!reduce) {
-  const lenis = new Lenis({ anchors: { duration: 1.6 } });
+  const lenis = new Lenis({ lerp: 0.16, anchors: { duration: 1.2 } });
   lenis.on('scroll', ScrollTrigger.update);
   gsap.ticker.add((t) => { lenis.raf(t * 1000); sound.speed(lenis.velocity); });
   gsap.ticker.lagSmoothing(0);
@@ -215,6 +297,7 @@ if (!reduce) {
     update();
   }, { passive: true });
   setInterval(() => { if (startedAt && !doneAt) tick(); }, 100);
+  gsap.ticker.add(() => { if (!startedAt) update(); }); // keeps the scroll cue pulsing until the first scroll
 
   // Copy rises in from a slight blur, once.
   ScrollTrigger.batch('[data-reveal]', {
@@ -247,7 +330,9 @@ if (!reduce) {
       const text = `Trace complete. 8 hops, ${e.detail.toFixed(1)} s, 0% packet loss.`;
       sound.swell();
       const tl = net?.finale() ?? gsap.timeline().addLabel('hold');
-      tl.set(summary, { opacity: 1, text: '' }, 1.2)
+      // Hold the summary's height while it retypes, so the page never resizes mid-finale.
+      tl.set(summary, { minHeight: summary.offsetHeight }, 0)
+        .set(summary, { opacity: 1, text: '' }, 1.2)
         .to(summary, { text, duration: text.length * 0.035, ease: 'none' }, 1.2)
         .to(reply, { opacity: 1, y: 0, duration: 1, ease: 'expo.out' }, 'hold+=2.4')
         .to(contact.children, { opacity: 1, y: 0, duration: 1.2, stagger: 0.15, ease: 'elastic.out(1, 0.6)' }, '>-0.4')

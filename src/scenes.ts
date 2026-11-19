@@ -108,7 +108,7 @@ export function workproof() {
     const tl = gsap.timeline({
       defaults: { ease: 'none' },
       scrollTrigger: {
-        trigger: stage, start: 'top top', end: wide ? '+=260%' : '+=150%',
+        trigger: stage, start: 'top top', end: wide ? '+=210%' : '+=130%',
         pin: true, scrub: 0.6, invalidateOnRefresh: true,
         // The stage covers the screen, so the network field behind it can rest.
         onToggle: (self) => { pinFade(self); root.classList.toggle('field-rest', self.isActive); },
@@ -186,7 +186,7 @@ export function checkpoint() {
       scrollTrigger: {
         trigger: sec, pin: true, scrub: 0.5, invalidateOnRefresh: true, onToggle: pinFade,
         start: () => (sec.offsetHeight > innerHeight ? 'bottom bottom' : 'top top'),
-        end: () => `+=${innerHeight * (innerWidth < 900 ? 1.7 : 2.1)}`,
+        end: () => `+=${innerHeight * (innerWidth < 900 ? 1.4 : 1.7)}`,
       },
     });
     lis[0].forEach((_, i) => {

@@ -585,3 +585,7 @@ html:not(.motion) .route .lit-glow, html:not(.motion) .route .halo, html:not(.mo
 .contact { align-items: center; }
 .contact .btn.cv { font-size: 16px; }
 @media (max-width: 600px) { .tldr dl { grid-template-columns: 1fr; gap: 0; } .tldr dd { margin-bottom: 8px; } }
+
+/* motion: the route is a screen-sized canvas; the page-tall SVG stays only for geometry */
+.motion svg.route { visibility: hidden; }
+.route-canvas { position: fixed !important; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }

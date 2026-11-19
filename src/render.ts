@@ -186,7 +186,7 @@ export function renderPage() {
 <div class="preloader" aria-hidden="true"><p><span data-pre-line>resolving yaseen-selemani...</span> <span data-pre-n>0%</span></p><i class="pre-packet"></i></div>
 <div class="motion-ask" hidden><p data-ask-text>Your device asked for less motion.</p><button type="button" data-motion="on">Play the full experience</button></div>
 <div class="page">
-  <svg class="route" aria-hidden="true"><path class="track"/><path class="lit-glow"/><path class="lit"/><g class="nodes"></g><circle class="cue" r="6"/><circle class="halo" r="18"/><circle class="packet" r="5"/></svg>
+  <svg class="route" aria-hidden="true"><path class="track"/><g class="lit-chunks"></g><g class="nodes"></g><circle class="cue" r="6"/><circle class="halo" r="18"/><circle class="packet" r="5"/></svg>
   ${hero()}
   <main>
     ${origin()}${field()}${certs()}${workproof()}${tierOne()}${builds()}${labs()}${destination()}
